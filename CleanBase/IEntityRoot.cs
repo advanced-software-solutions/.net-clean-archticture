@@ -2,7 +2,7 @@
 
 namespace CleanBase
 {
-    public interface IEntityParent
+    public interface IEntityRoot
     {
         int Id { get; set; }
         [Timestamp]

@@ -1,6 +1,6 @@
 ﻿namespace CleanBase.Entities
 {
-    public class ConfigurationItem : EntityParent
+    public class ConfigurationItem : EntityRoot
     {
         public string Key { get; set; }
         public string Value { get; set; }
