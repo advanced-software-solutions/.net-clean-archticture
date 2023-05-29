@@ -7,9 +7,11 @@ namespace CleanAPI.Controllers
     [Route("[controller]")]
     public class WeatherForecastController : ControllerBase
     {
-        public WeatherForecastController(ITodoListService todoListService)
+        IConfiguration _configuration;
+        public WeatherForecastController(ITodoListService todoListService, IConfiguration configuration)
         {
             this.todoListService = todoListService;
+            _configuration = configuration;
         }
         private static readonly string[] Summaries = new[]
         {
@@ -32,6 +34,12 @@ namespace CleanAPI.Controllers
                 Summary = Summaries[Random.Shared.Next(Summaries.Length)]
             })
             .ToArray();
+        }
+        [HttpGet("Config")]
+        public IActionResult Config()
+        {
+            var data = _configuration["App:Title"];
+            return Ok(data);
         }
     }
 }

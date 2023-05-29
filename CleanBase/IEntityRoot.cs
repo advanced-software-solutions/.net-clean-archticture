@@ -4,7 +4,7 @@ namespace CleanBase
 {
     public interface IEntityRoot
     {
-        uint Id { get; set; }
+        int Id { get; set; }
         [Timestamp]
         byte[]? Rowversion { get; set; }
     }

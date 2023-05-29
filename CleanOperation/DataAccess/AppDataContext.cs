@@ -19,8 +19,8 @@ namespace CleanOperation.DataAccess
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.Entity<Configuration>().ToTable("Configurations", "App");
-            modelBuilder.Entity<ConfigurationItem>().ToTable("ConfigurationsItems", "App");
+            modelBuilder.Entity<CleanConfiguration>().ToTable("Configurations", "App");
+            modelBuilder.Entity<CleanConfigurationItem>().ToTable("ConfigurationsItems", "App");
             modelBuilder.Entity<TodoItem>().ToTable("TodoItems");
             modelBuilder.Entity<TodoList>().ToTable("TodoLists");
             EntityPropertyMapper(modelBuilder);
