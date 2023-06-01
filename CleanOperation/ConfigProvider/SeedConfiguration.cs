@@ -13,19 +13,23 @@ namespace CleanOperation.ConfigProvider
         }
         public void Seed()
         {
-            dataContext.Add<CleanConfiguration>(new CleanConfiguration
+            var appTitle = dataContext.Set<CleanConfiguration>().FirstOrDefault(y => y.Name == "App");
+            if (appTitle == null)
             {
-                Name = "App",
-                ConfigurationItems =
+                dataContext.Add(new CleanConfiguration
+                {
+                    Name = "App",
+                    ConfigurationItems =
                 new() {
                     new CleanConfigurationItem
                     {
                         Key = "Title",
                         Value = "Clean Arch .NET 6"
                     }
+                }
+                });
+                dataContext.SaveChanges();
             }
-            });
-            dataContext.SaveChanges();
         }
     }
 }

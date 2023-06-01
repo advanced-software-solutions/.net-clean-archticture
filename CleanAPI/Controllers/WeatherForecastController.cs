@@ -1,5 +1,7 @@
 using CleanBase.CleanAbstractions.CleanBusiness;
+using CleanBase.Entities;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace CleanAPI.Controllers
 {

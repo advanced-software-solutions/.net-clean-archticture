@@ -37,6 +37,7 @@ namespace CleanOperation.DataAccess
                 EntityTypeBuilder entityTypeBuilder = modelBuilder.Entity(entity.ClrType);
                 entityTypeBuilder.Property(nameof(EntityRoot.Id)).ValueGeneratedOnAdd();
                 entityTypeBuilder.Property(nameof(EntityRoot.Rowversion)).IsConcurrencyToken();
+                entityTypeBuilder.Property(nameof(EntityRoot.Rowversion)).ValueGeneratedOnAddOrUpdate();
             }
         }
     }

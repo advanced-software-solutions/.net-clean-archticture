@@ -24,6 +24,7 @@ namespace CleanOperation
                     {
                         base.Aspect(operation);
                         _dataContext.SaveChanges();
+                        txn.Commit();
                     }
                     catch (Exception)
                     {
@@ -47,6 +48,7 @@ namespace CleanOperation
                     {
                         var items = base.Aspect(operation);
                         _dataContext.SaveChanges();
+                        txn.Commit();
                         return items;
                     }
                     catch (Exception)
@@ -57,11 +59,11 @@ namespace CleanOperation
                 }
             }
         }
-        public override Task<TResult> AspectAsync<TResult>(Func<Task<TResult>> operation)
+        public override async Task<TResult> AspectAsync<TResult>(Func<Task<TResult>> operation)
         {
             if (_dataContext.Database.CurrentTransaction != null)
             {
-                return base.AspectAsync(operation);
+                return await base.AspectAsync(operation);
             }
             else
             {
@@ -71,7 +73,8 @@ namespace CleanOperation
                     {
                         var items = base.AspectAsync(operation);
                         _dataContext.SaveChanges();
-                        return items;
+                        await txn.CommitAsync();
+                        return await items;
                     }
                     catch (Exception)
                     {
@@ -95,6 +98,7 @@ namespace CleanOperation
                     {
                         await base.AspectVoidAsync(operation);
                         _dataContext.SaveChanges();
+                        await txn.CommitAsync();
                     }
                     catch (Exception)
                     {

@@ -2,6 +2,7 @@
 (
 	[Id] INT NOT NULL PRIMARY KEY IDENTITY, 
     [Title] NVARCHAR(50) NOT NULL, 
-    [DueDate] DATETIME NOT NULL,
+    [DueDate] DATETIME NOT NULL, 
+    [Rowversion] TIMESTAMP NULL
 
 )

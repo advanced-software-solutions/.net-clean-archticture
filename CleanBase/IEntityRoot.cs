@@ -6,6 +6,6 @@ namespace CleanBase
     {
         int Id { get; set; }
         [Timestamp]
-        byte[]? Rowversion { get; set; }
+        byte[] Rowversion { get; set; }
     }
 }
