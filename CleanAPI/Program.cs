@@ -17,8 +17,8 @@ namespace CleanAPI
             // Add services to the container.
             builder.Services.AddDbContext<AppDataContext>(y =>
             {
-                //y.UseSqlServer("");
-                y.UseInMemoryDatabase("Main");
+                y.UseSqlServer(builder.Configuration["ConnectionString:DefaultConnection"]);
+                //y.UseInMemoryDatabase("Main");
                 y.ConfigureWarnings(y => y.Ignore(InMemoryEventId.TransactionIgnoredWarning));
             });
             builder.Host.ConfigureAppConfiguration((hostingContext, configBuilder) =>

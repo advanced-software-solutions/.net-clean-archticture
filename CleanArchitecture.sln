@@ -7,13 +7,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CleanAPI", "CleanAPI\CleanA
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Implementation", "Implementation", "{032AB023-02CD-471D-984B-CE9C9B28F91B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleanBase", "CleanBase\CleanBase.csproj", "{A2DA9DAD-C158-46DA-BC53-4329AA9D08D4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CleanBase", "CleanBase\CleanBase.csproj", "{A2DA9DAD-C158-46DA-BC53-4329AA9D08D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleanOperation", "CleanOperation\CleanOperation.csproj", "{35C77AD3-7A80-4570-98B7-369CACDF5F04}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CleanOperation", "CleanOperation\CleanOperation.csproj", "{35C77AD3-7A80-4570-98B7-369CACDF5F04}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleanBusiness", "CleanBusiness\CleanBusiness.csproj", "{DC137D8E-9E09-414E-BFAF-15F02E59801B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CleanBusiness", "CleanBusiness\CleanBusiness.csproj", "{DC137D8E-9E09-414E-BFAF-15F02E59801B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleanFront", "CleanFront\CleanFront.csproj", "{767AC9CC-2AD8-4016-830B-0499A2D012E6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CleanFront", "CleanFront\CleanFront.csproj", "{767AC9CC-2AD8-4016-830B-0499A2D012E6}"
+EndProject
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "DatabaseApp", "DatabaseApp\DatabaseApp.sqlproj", "{709F19F4-7577-4819-ABD7-4ADD1DFB2A07}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +43,12 @@ Global
 		{767AC9CC-2AD8-4016-830B-0499A2D012E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{767AC9CC-2AD8-4016-830B-0499A2D012E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{767AC9CC-2AD8-4016-830B-0499A2D012E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{709F19F4-7577-4819-ABD7-4ADD1DFB2A07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{709F19F4-7577-4819-ABD7-4ADD1DFB2A07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{709F19F4-7577-4819-ABD7-4ADD1DFB2A07}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{709F19F4-7577-4819-ABD7-4ADD1DFB2A07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{709F19F4-7577-4819-ABD7-4ADD1DFB2A07}.Release|Any CPU.Build.0 = Release|Any CPU
+		{709F19F4-7577-4819-ABD7-4ADD1DFB2A07}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
