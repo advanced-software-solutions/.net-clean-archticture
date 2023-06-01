@@ -9,6 +9,7 @@ namespace CleanBase.Validator
         {
             RuleFor(x => x.Title).NotEmpty();
             RuleFor(x => x.DueDate).GreaterThanOrEqualTo(DateTime.Now);
+
         }
     }
 }

@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Query;
 using System.Linq.Expressions;
-using Z.EntityFramework.Plus;
 
 namespace CleanOperation.DataAccess
 {
@@ -109,7 +108,6 @@ namespace CleanOperation.DataAccess
             return Aspect(() =>
             {
                 _dataContext.Add(entity);
-                _dataContext.SaveChanges();
                 return entity;
             });
         }
@@ -129,8 +127,7 @@ namespace CleanOperation.DataAccess
             Guard.Against.Null(entity);
             return await AspectAsync(async () =>
             {
-                _dataContext.Add(entity);
-                await _dataContext.SaveChangesAsync();
+                await _dataContext.AddAsync(entity);
                 return entity;
             });
         }
