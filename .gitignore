@@ -15,3 +15,5 @@
 /CleanOperation/obj
 /DatabaseApp/bin/Debug
 /DatabaseApp/obj/Debug
+/DatabaseApp/DatabaseApp.dbmdl
+*.jfm
