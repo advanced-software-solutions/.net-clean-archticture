@@ -22,10 +22,11 @@ This project was created by [Advanced Software Solution](https://advancedsoftwar
 	 2. Validation
 	 3. Operation
 	 4. Mapping
-	 5. Service
-	 6. Injection for Operation and Services
-	 7. API Controllers
-	 8. OData
+	 5. Repository
+	 6. Service
+	 7. Injection for Operation and Services
+	 8. API Controllers
+	 9. OData
 4. Deployment
 	1. Local IIS
 	2. Azure
@@ -99,3 +100,191 @@ The validation is usually implemented on the entity level, to so we will define 
     
         }
     } 
+You can can control the validation from the **Program.cs** where you can configure it further more. 
+
+    //Current configuration at Program.cs
+    .AddFluentValidation(r =>
+    {
+     r.RegisterValidatorsFromAssemblyContaining<TodoListValidation>(lifetime: ServiceLifetime.Scoped);
+     r.AutomaticValidationEnabled = false;
+     r.ImplicitlyValidateChildProperties = false;
+    })
+
+### 3. Operation
+
+We wanted to keep our low level access code (i.e. The code that does operation non business related) on a tier that is shared across multiple layers and we can access it from multiple services or locations. By creating the Operation layer we place the common code such as RESTFul calls to outside services in a place we can access it multiple times without facing circular dependency issues. 
+
+Also, we choosed this layer to hold the **DBContext** and the **Repository** class as we will not have to worry about any conflicts in the injections across multiple services.
+
+### 4. Mapping
+#### AppDataContext
+Where we define our mapping between EF and the tables in the database. We map the **Entity** class we created in the **CleanBase** and we set the relevant table that connects to this entity. We recommend to name the table with Pluarl nouns and the Entity in Singular so we can keep an eye while mapping the **Entity** and the **Table**.
+
+We choose to user FluentAPI not DbSet to map our entities with entity framework. This way we are keeping our DbContext class clean and easy to manage and read while we do all the mapping and sometimes the diffcult configurations via FluentAPI. And also, this way we don't need to add extra attributes on the class of the entity.
+
+Let's see how we mapped the TodoList entity with the relevant table:
+
+    modelBuilder.Entity<TodoList>().ToTable("TodoLists", "Core");
+For the other propertises such as the Id or the Row version, we don't need to include them here as we already have them configured in the **EntityPropertyMapper** method.
+
+### 5. Repository
+To enhance our data access and make it simple, we have the Repository class that contains many methods will make it very simple for us to access the tables in our database and make it easier to CRUD the data. The following mehods are implemented:
+
+    T? Get(int id, Func<IQueryable<T>, IIncludableQueryable<T, object>>? includedNavigations = null);
+            T? Get(Expression<Func<T, bool>> query, Func<IQueryable<T>, IIncludableQueryable<T, object>>? includedNavigations = null);
+            T Insert(T entity);
+            EntityEntry<T> Update(T entity);
+            void Delete(T entity);
+            void Delete(int id);
+            Task<T?> GetAsync(int id, Func<IQueryable<T>, IIncludableQueryable<T, object>>? includedNavigations = null);
+            Task<T?> GetAsync(Expression<Func<T, bool>> query, Func<IQueryable<T>, IIncludableQueryable<T, object>>? includedNavigations = null);
+            Task<T?> InsertAsync(T entity);
+            List<T> Insert(List<T> entities);
+            Task InsertAsync(List<T> entity);
+            void Update(List<T> entities);
+            void Delete(List<T> entities);
+            IQueryable<T?> Query();
+
+These methods contians the basic access methods for any entity and you can access them by injecting the relevant entity with the repository class. It is always encouraged to inject multiple repository rather than services into each other to avoid circular dependency issues. 
+
+For you to understand how the repository class works, let's examin a method that does an insert:
+
+    public T Insert(T entity)
+    {
+                Guard.Against.Null(entity);
+                return Aspect(() =>
+                {
+                    _dataContext.Add(entity);
+                    return entity;
+                });
+     }
+
+ Notice that we send a generic parameter on our repository class so we can handle all the different types. Next, we added a Guard to make sure our input is valid, other wise it will raise an exception. Now, we added an Aspect wround the actual method, but what is an Aspect? It is a an action method that we implemented we use it to wrapp our methods to eliminate redundent code such as "try...Catch" and enabling the transactions for saving the data on the database.
+ 
+ So we wrapped the DbContext method with this Aspect, and after it executes it will save the changes and commit the transaction the database. Take a look inside the aspect method to see more details:
+
+        public override T Aspect<T>(Func<T> operation)
+        {
+            if (_dataContext.Database.CurrentTransaction != null)
+            {
+                return base.Aspect(operation);
+            }
+            else
+            {
+                using (var txn = _dataContext.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        var items = base.Aspect(operation);
+                        _dataContext.SaveChanges();
+                        txn.Commit();
+                        return items;
+                    }
+                    catch (Exception)
+                    {
+                        txn.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+Just before we jump on, please note that since we are already using OData in most of the time we will lower the amount of typical code, also the other common operations are already implemented such as insert, insert bulk.
+
+### 6. Service
+Here begins the actual work for our business implementation. Here we define our logic and how the actions must be done. Remember that we prefer to inject repository rather than other services. If we need to implement another service logic we can use MediateR to call the other service rather than injecting it. This way we have a much cleaner code and no issue with circuluer dependency.
+
+To implement a service we need first to place it on th eCleanBase project Abstraction where it will inherit the IRootService interface so we can have the luxury of the common methods. The service takes a generic entity type so it can define the default repository.
+
+Let's take a look at the TodoService
+
+    namespace CleanBase.CleanAbstractions.CleanBusiness
+    {
+        public interface ITodoListService : IRootService<TodoList>
+        {
+        }
+    }
+Notice that it inherits the IRootService and it takes the Entity type. Also, here you can define your extra service methods.
+
+Now in the CleanBusiness layer we implement the service interface,and we need to inherit the RootService class where we have the implementation for the IRootService methods.
+
+The RootService is intended to give us an easy access to the repository along with more enhancements that we shall later on add them. 
+
+Remember as we are using OData for this project, we rarely need to add read methods as using OData will give us an easy access to build our queries in a dynamic way.
+
+### 7. Injection
+We will need to inject any service or operation into the Program.cs so we can later on use it through the operation. 
+
+### 8. API Controller
+We usually define the Controller with the same name of the Entity and end it with Controller. And we need to inherit the BaseController where we pass the entity so we can have access to the common methods we have avaliable in the BaseService.
+
+Also, we have the access to the OData as well were we send the query via the URL so we can get the results of any query without need to hardcode them. Let's look at the TodoListController:
+
+    using CleanBase.CleanAbstractions.CleanBusiness;
+    using CleanBase.Entities;
+    
+    namespace CleanAPI.Controllers
+    {
+        public class TodoListController : BaseController<TodoList>
+        {
+            public TodoListController(ITodoListService todoListService):base(todoListService)
+            {
+                
+            }
+        }
+    }
+
+The Base Controller has the following methods:
+
+    using CleanBase;
+    using CleanBase.CleanAbstractions.CleanBusiness;
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.AspNetCore.OData.Query;
+    
+    namespace CleanAPI.Controllers
+    {
+        [ApiController]
+        [Route("[controller]")]
+        public class BaseController<T> : ControllerBase where T : class, IEntityRoot
+        {
+            private readonly IRootService<T> _service;
+            public BaseController(IRootService<T> service)
+            {
+                _service = service;
+            }
+            [HttpGet]
+            [EnableQuery]
+            public IActionResult Get()
+            {
+                return Ok(_service.Query());
+            }
+            [HttpPost]
+            public async Task<IActionResult> Post([FromBody] T entity)
+            {
+                var result = await _service.InsertAsync(entity);
+                return Ok(result);
+            }
+            [HttpPost("[action]")]
+            public async Task<IActionResult> InsertList([FromBody] List<T> entity)
+            {
+                await _service.InsertAsync(entity);
+                return Ok(entity);
+            }
+            [HttpPut]
+            public IActionResult Put([FromBody] T entity)
+            {
+                var result = _service.Update(entity);
+                return Ok(result.Entity);
+            }
+            [HttpDelete]
+            public IActionResult Delete(int id)
+            {
+                _service.Delete(id);
+                return Ok();
+            }
+        }
+    }
+
+Notice that the URL route will be as the name of the entity. For example: 'api/TodoList' with using the right Http Request Type (GET, POST, PUT, DELETE).
+### 9. OData
+To easy the query of entities, we can use OData to query the data as we like. For example, if we want to query the TodoList where it is past due we just send the following URL: 'api/TodoList?$filter=DueDate gt 2023-06-10 ' and we shall get our results.
+You can get more information about [OData from their official website](https://www.odata.org/).
