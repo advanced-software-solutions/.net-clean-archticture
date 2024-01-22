@@ -17,3 +17,7 @@
 /DatabaseApp/obj/Debug
 /DatabaseApp/DatabaseApp.dbmdl
 *.jfm
+/CleanAPI/bin/Debug/net8.0
+/CleanBase/bin/Debug/net8.0
+/CleanBusiness/bin/Debug/net8.0
+/CleanOperation/bin/Debug/net8.0
