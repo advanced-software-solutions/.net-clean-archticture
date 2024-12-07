@@ -31,7 +31,8 @@ namespace CleanAPI
             // Add services to the container.
             builder.Services.AddDbContext<AppDataContext>(y =>
             {
-                y.UseSqlServer(builder.Configuration["ConnectionString:DefaultConnection"]);
+                var dbConnection = builder.Configuration["ConnectionStrings:DefaultConnection"]; 
+                y.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]);
                 //y.UseInMemoryDatabase("Main");
                 y.EnableDetailedErrors();
                 y.EnableSensitiveDataLogging();
@@ -41,7 +42,7 @@ namespace CleanAPI
             {
                 var config = configBuilder.Build();
                 var configSource = new CustomCleanConfigurationSource(opts =>
-                    opts.UseSqlServer(builder.Configuration["ConnectionString:DefaultConnection"]));
+                    opts.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]));
                 configBuilder.Add(configSource);
             });
             var defaultBatchHandler = new DefaultODataBatchHandler();
