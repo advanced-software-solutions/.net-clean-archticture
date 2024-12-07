@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Query;
 using System.Linq.Expressions;
 
@@ -20,5 +21,6 @@ namespace CleanBase.CleanAbstractions.CleanOperation
         void Update(List<T> entities);
         void Delete(List<T> entities);
         IQueryable<T?> Query();
+        DbContext GetAppDataContext();
     }
 }

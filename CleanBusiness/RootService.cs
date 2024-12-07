@@ -2,6 +2,7 @@
 using CleanBase.CleanAbstractions.CleanBusiness;
 using CleanBase.CleanAbstractions.CleanOperation;
 using CleanOperation;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Query;
 using System.Linq.Expressions;
@@ -38,6 +39,11 @@ namespace CleanBusiness
         public T? Get(Expression<Func<T, bool>> query, Func<IQueryable<T>, IIncludableQueryable<T, object>>? includedNavigations = null)
         {
             return _repository.Get(query, includedNavigations);
+        }
+
+        public DbContext GetAppDataContext()
+        {
+            return _repository.GetAppDataContext();
         }
 
         public async Task<T?> GetAsync(int id, Func<IQueryable<T>, IIncludableQueryable<T, object>>? includedNavigations = null)

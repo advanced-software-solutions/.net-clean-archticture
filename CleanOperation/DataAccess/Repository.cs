@@ -164,5 +164,7 @@ namespace CleanOperation.DataAccess
                 _dataContext.BulkUpdate(entities);
             });
         }
+
+        public DbContext GetAppDataContext() { return _dataContext; }
     }
 }
