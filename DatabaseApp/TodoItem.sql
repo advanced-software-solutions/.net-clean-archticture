@@ -1,8 +1,8 @@
 ﻿CREATE TABLE [Core].[TodoItems]
 (
-	[Id] INT NOT NULL PRIMARY KEY IDENTITY, 
+	[Id] [uniqueidentifier] NOT NULL DEFAULT(NEWID()), 
     [Title] NVARCHAR(MAX) NOT NULL, 
     [Completed] BIT NOT NULL DEFAULT 0, 
-    [TodoListId] INT NOT NULL, 
+    [TodoListId] [uniqueidentifier] NOT NULL, 
     [Rowversion] TIMESTAMP NULL
 )

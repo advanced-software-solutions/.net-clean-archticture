@@ -2,7 +2,7 @@
 
 namespace CleanBase.CleanAbstractions.CleanBusiness
 {
-    public interface ITodoListService : IRootService<TodoList>
-    {
-    }
+    //public interface ITodoListService : IRootService<TodoList>
+    //{
+    //}
 }

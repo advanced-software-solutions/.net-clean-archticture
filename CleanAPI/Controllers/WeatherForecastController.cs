@@ -1,7 +1,12 @@
+using CleanBase;
 using CleanBase.CleanAbstractions.CleanBusiness;
 using CleanBase.Entities;
+using CleanBusiness;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace CleanAPI.Controllers
 {
@@ -10,9 +15,8 @@ namespace CleanAPI.Controllers
     public class WeatherForecastController : ControllerBase
     {
         IConfiguration _configuration;
-        public WeatherForecastController(ITodoListService todoListService, IConfiguration configuration)
+        public WeatherForecastController(IConfiguration configuration)
         {
-            this.todoListService = todoListService;
             _configuration = configuration;
         }
         private static readonly string[] Summaries = new[]
@@ -21,14 +25,12 @@ namespace CleanAPI.Controllers
     };
 
         private readonly ILogger<WeatherForecastController> _logger;
-        private readonly ITodoListService todoListService;
+        
 
 
         [HttpGet(Name = "GetWeatherForecast")]
         public IEnumerable<WeatherForecast> Get()
         {
-            todoListService.Insert(new CleanBase.Entities.TodoList { DueDate = DateTime.Now, Title = "Test item" });
-            var test = todoListService.Get(y => y.Id > 0);
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
                 Date = DateTime.Now.AddDays(index),
@@ -43,5 +45,32 @@ namespace CleanAPI.Controllers
             var data = _configuration["App:Title"];
             return Ok(data);
         }
+
+        [HttpGet("[action]")]
+        public IActionResult TestGenerator()
+        {
+            Compilation inputCompilation = CreateCompilation(@"
+        namespace MyCode
+        {
+            public class Program
+            {
+                public static void Main(string[] args)
+                {
+                }
+            }
+        }
+        ");
+            ServiceGenerator serviceGenerator = new ServiceGenerator();
+            GeneratorDriver driver = CSharpGeneratorDriver.Create(serviceGenerator);
+            driver = driver.RunGeneratorsAndUpdateCompilation(inputCompilation, out var outputCompilation, out var diagnostics);
+            return Ok("test");
+        }
+
+        private static Compilation CreateCompilation(string source)
+           => CSharpCompilation.Create("compilation",
+               new[] { CSharpSyntaxTree.ParseText(source) },
+               new[] { MetadataReference.CreateFromFile(typeof(RootService<>).GetTypeInfo().Assembly.Location),
+                       MetadataReference.CreateFromFile(typeof(EntityRoot).GetTypeInfo().Assembly.Location)},
+               new CSharpCompilationOptions(OutputKind.ConsoleApplication));
     }
 }

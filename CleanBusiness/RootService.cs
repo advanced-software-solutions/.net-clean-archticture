@@ -21,7 +21,7 @@ namespace CleanBusiness
             _repository.Delete(entity);
         }
 
-        public void Delete(int id)
+        public void Delete(Guid id)
         {
             _repository.Delete(id);
         }
@@ -31,7 +31,7 @@ namespace CleanBusiness
             _repository.Delete(entities);
         }
 
-        public T? Get(int id, Func<IQueryable<T>, IIncludableQueryable<T, object>>? includedNavigations = null)
+        public T? Get(Guid id, Func<IQueryable<T>, IIncludableQueryable<T, object>>? includedNavigations = null)
         {
             return _repository.Get(id, includedNavigations);
         }
@@ -46,7 +46,7 @@ namespace CleanBusiness
             return _repository.GetAppDataContext();
         }
 
-        public async Task<T?> GetAsync(int id, Func<IQueryable<T>, IIncludableQueryable<T, object>>? includedNavigations = null)
+        public async Task<T?> GetAsync(Guid id, Func<IQueryable<T>, IIncludableQueryable<T, object>>? includedNavigations = null)
         {
             return await _repository.GetAsync(id, includedNavigations);
         }

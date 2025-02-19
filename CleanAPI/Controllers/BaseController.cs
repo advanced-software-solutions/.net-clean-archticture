@@ -39,7 +39,7 @@ namespace CleanAPI.Controllers
             return Ok(result.Entity);
         }
         [HttpDelete]
-        public IActionResult Delete(int id)
+        public IActionResult Delete(Guid id)
         {
             _service.Delete(id);
             return Ok();

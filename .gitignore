@@ -25,3 +25,7 @@
 /CleanBase/bin/Debug/net9.0
 /CleanBusiness/bin/Debug/net9.0
 /CleanOperation/bin/Debug/net9.0
+/CleanAPIGenerator/obj
+/CleanAPIGenerator/bin/Debug/netstandard2.0
+/CleanGenerator/bin/Debug/netstandard2.0
+/CleanGenerator/obj

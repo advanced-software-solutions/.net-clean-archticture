@@ -24,7 +24,7 @@ namespace CleanOperation.ConfigProvider
                     new CleanConfigurationItem
                     {
                         Key = "Title",
-                        Value = "Clean Arch .NET 6"
+                        Value = "Clean Arch .NET 9"
                     }
                 }
                 });

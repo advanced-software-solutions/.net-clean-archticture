@@ -27,9 +27,9 @@ namespace CleanOperation.DataAccess
             });
         }
 
-        public void Delete(int id)
+        public void Delete(Guid id)
         {
-            Guard.Against.NegativeOrZero(id);
+            Guard.Against.NullOrEmpty(id);
             Aspect(() =>
             {
                 var item = Get(id);
@@ -46,9 +46,9 @@ namespace CleanOperation.DataAccess
             });
         }
 
-        public T? Get(int id, Func<IQueryable<T>, IIncludableQueryable<T, object>>? navigations = null)
+        public T? Get(Guid id, Func<IQueryable<T>, IIncludableQueryable<T, object>>? navigations = null)
         {
-            Guard.Against.NegativeOrZero(id);
+            Guard.Against.NullOrEmpty(id);
             return Aspect(() =>
             {
                 var query = _dataContext.Set<T>().AsQueryable();
@@ -74,9 +74,9 @@ namespace CleanOperation.DataAccess
             });
         }
 
-        public async Task<T?> GetAsync(int id, Func<IQueryable<T>, IIncludableQueryable<T, object>>? navigations = null)
+        public async Task<T?> GetAsync(Guid id, Func<IQueryable<T>, IIncludableQueryable<T, object>>? navigations = null)
         {
-            Guard.Against.NegativeOrZero(id);
+            Guard.Against.NullOrEmpty(id);
             return await AspectAsync(async () =>
             {
                 var query = _dataContext.Set<T>().AsQueryable();
