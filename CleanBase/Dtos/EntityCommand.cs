@@ -8,6 +8,6 @@
 
     public enum ActionType
     {
-
+        ReadAll
     }
 }

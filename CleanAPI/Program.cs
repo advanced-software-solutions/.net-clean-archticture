@@ -1,10 +1,12 @@
 using Akka.Actor;
+using Akka.DependencyInjection;
 using CleanBase;
 using CleanBase.CleanAbstractions.CleanBusiness;
 using CleanBase.CleanAbstractions.CleanOperation;
 using CleanBase.Entities;
 using CleanBase.Validator;
 using CleanBusiness;
+using CleanBusiness.Actors;
 using CleanOperation.ConfigProvider;
 using CleanOperation.DataAccess;
 using FluentValidation;
@@ -90,9 +92,23 @@ namespace CleanAPI
                 }
             }
             //builder.Services.AddScoped<ITodoListService, TodoListService>();
-            var actorSystem = ActorSystem.Create("CleanSystem");
-            // Register Akka.NET services
-            builder.Services.AddSingleton(actorSystem);
+
+            builder.Services.AddSingleton(provider =>
+            {
+                var bootstrap = BootstrapSetup.Create();
+                var di = DependencyResolverSetup.Create(provider);
+                var actorSystemSetup = bootstrap.And(di);
+                return ActorSystem.Create("CleanSystem", actorSystemSetup);
+            });
+
+            // Register MarketDataProcessorActor with dependency injection
+            builder.Services.AddSingleton(provider =>
+            {
+                var actorSystem = provider.GetRequiredService<ActorSystem>();
+                var props = DependencyResolver.For(actorSystem).Props<TodoListActor>();
+                return actorSystem.ActorOf(props, "TodoListActor");
+            });
+
             var app = builder.Build();
             app.UseSerilogRequestLogging();
             // Configure the HTTP request pipeline.
