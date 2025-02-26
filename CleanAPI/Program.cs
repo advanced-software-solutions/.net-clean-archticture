@@ -98,7 +98,8 @@ namespace CleanAPI
                 var bootstrap = BootstrapSetup.Create();
                 var di = DependencyResolverSetup.Create(provider);
                 var actorSystemSetup = bootstrap.And(di);
-                return ActorSystem.Create("CleanSystem", actorSystemSetup);
+                var system = ActorSystem.Create("CleanSystem", actorSystemSetup);
+                return system;
             });
 
             // Register MarketDataProcessorActor with dependency injection
@@ -106,7 +107,7 @@ namespace CleanAPI
             {
                 var actorSystem = provider.GetRequiredService<ActorSystem>();
                 var props = DependencyResolver.For(actorSystem).Props<TodoListActor>();
-                return actorSystem.ActorOf(props, "TodoListActor");
+                return actorSystem.ActorOf(props, nameof(TodoListActor));
             });
 
             var app = builder.Build();

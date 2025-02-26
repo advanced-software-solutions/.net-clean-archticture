@@ -1,7 +1,10 @@
+using Akka.Actor;
 using CleanBase;
 using CleanBase.CleanAbstractions.CleanBusiness;
+using CleanBase.Dtos;
 using CleanBase.Entities;
 using CleanBusiness;
+using CleanBusiness.Actors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -15,9 +18,12 @@ namespace CleanAPI.Controllers
     public class WeatherForecastController : ControllerBase
     {
         IConfiguration _configuration;
-        public WeatherForecastController(IConfiguration configuration)
+        private readonly IActorRef actorRef;
+
+        public WeatherForecastController(IConfiguration configuration, IActorRef actorRef)
         {
             _configuration = configuration;
+            this.actorRef = actorRef;
         }
         private static readonly string[] Summaries = new[]
         {
@@ -45,7 +51,16 @@ namespace CleanAPI.Controllers
             var data = _configuration["App:Title"];
             return Ok(data);
         }
-
+        [HttpGet("[action]")]
+        public async Task<IActionResult> TestActor()
+        {
+            //var result = await actorRef.Ask<string>("hello world!");
+            var result2 = await actorRef.Ask<List<TodoList>>(new EntityCommand
+            {
+                Action = ActionType.ReadAll
+            });
+            return Ok(result2);
+        }
         [HttpGet("[action]")]
         public IActionResult TestGenerator()
         {
