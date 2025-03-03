@@ -55,11 +55,7 @@ namespace CleanAPI.Controllers
         public async Task<IActionResult> TestActor()
         {
             //var result = await actorRef.Ask<string>("hello world!");
-            var result2 = await actorRef.Ask<List<TodoList>>(new EntityCommand
-            {
-                Action = ActionType.ReadAll
-            });
-            return Ok(result2);
+            return Ok();
         }
         [HttpGet("[action]")]
         public IActionResult TestGenerator()

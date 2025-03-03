@@ -1,4 +1,5 @@
-﻿using Ardalis.GuardClauses;
+﻿using Akka.Util.Internal;
+using Ardalis.GuardClauses;
 using CleanBase;
 using CleanBase.CleanAbstractions.CleanOperation;
 using Microsoft.EntityFrameworkCore;
@@ -42,7 +43,7 @@ namespace CleanOperation.DataAccess
             Guard.Against.Null(entities);
             Aspect(() =>
             {
-                _dataContext.BulkDelete(entities);
+                _dataContext.Set<T>().RemoveRange(entities);
             });
         }
 
@@ -117,7 +118,7 @@ namespace CleanOperation.DataAccess
             Guard.Against.NullOrEmpty(entities);
             return Aspect(() =>
             {
-                _dataContext.BulkInsert(entities);
+                _dataContext.Set<T>().AddRange(entities);
                 return entities;
             });
         }
@@ -137,7 +138,7 @@ namespace CleanOperation.DataAccess
             Guard.Against.NullOrEmpty(entities);
             await AspectVoidAsync(async () =>
             {
-                await _dataContext.BulkInsertAsync(entities);
+                await _dataContext.Set<T>().AddRangeAsync(entities);
             });
         }
 
@@ -161,7 +162,7 @@ namespace CleanOperation.DataAccess
             Guard.Against.NullOrEmpty(entities);
             Aspect(() =>
             {
-                _dataContext.BulkUpdate(entities);
+                _dataContext.Set<T>().UpdateRange(entities);
             });
         }
 
