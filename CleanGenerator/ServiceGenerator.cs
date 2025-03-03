@@ -10,70 +10,116 @@ public class ServiceGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var entityProvider = context.CompilationProvider
-            .SelectMany((compilation, _) =>
-            {
-                // Resolve EntityRoot from the correct namespace
-                var entityRoot = compilation.GetTypeByMetadataName("CleanBase.EntityRoot");
-                if (entityRoot == null) return Enumerable.Empty<INamedTypeSymbol>();
-                return GetAllTypes(compilation.GlobalNamespace)
-                                 .Where(t => IsValidEntity(t, compilation.Assembly, entityRoot));
-            });
+        IncrementalValuesProvider<INamedTypeSymbol> entities =
+               context.CompilationProvider.SelectMany((compilation, _) =>
+               {
+                   // Resolve EntityRoot from the correct namespace
+                   var entityRoot = compilation.GetTypeByMetadataName("CleanBase.EntityRoot");
+                   if (entityRoot == null) return Enumerable.Empty<INamedTypeSymbol>();
 
-        var dependencyProvider = context.CompilationProvider
-            .Select((compilation, _) => (
-                RootService: GetGenericInterface(compilation, "CleanBusiness.RootService`1"),
-                IRepository: GetGenericInterface(compilation, "CleanBase.CleanAbstractions.CleanOperation.IRepository`1")
-            ));
+                   return GetAllTypes(compilation.GlobalNamespace)
+                       .Where(t => IsValidEntity(t, compilation.Assembly, entityRoot));
+               });
 
-        var combinedProvider = entityProvider.Combine(dependencyProvider);
-
-        context.RegisterSourceOutput(combinedProvider, (spc, source) =>
+        context.RegisterSourceOutput(entities, (spc, source) =>
         {
-            var (entity, dependencies) = source;
-            var (rootService, iRepository) = dependencies;
 
-            if (rootService == null || iRepository == null) return;
+            var sourceText = $$"""
 
-            GenerateServiceClass(spc, entity, rootService, iRepository);
+            using Akka.Actor;
+            using CleanBase.CleanAbstractions.CleanOperation;
+            using CleanBase.Dtos;
+            using CleanBase.Entities;
+            using CleanOperation.Abstractions;
+            using Microsoft.Extensions.DependencyInjection;
+
+            namespace CleanBusiness.Actors
+            {
+                public partial class {{source.Name}}Actor : ReceiveActor, ICleanActor
+                {
+                    public {{source.Name}}Actor(IServiceProvider serviceProvider)
+                    {
+                        Receive<EntityCommand<{{source.Name}}, Guid>>(async msg =>
+                        {
+                            using (var scope = serviceProvider.CreateScope())
+                            {
+                                var repo = scope.ServiceProvider.GetRequiredService<IRepository<{{source.Name}}>>();
+
+                                switch (msg.Action)
+                                {
+                                    case ActionType.Insert:
+                                        await Insert(repo, msg);
+                                        break;
+                                    case ActionType.InsertList:
+                                        await InsertList(repo, msg);
+                                        break;
+                                    case ActionType.Update:
+                                        Update(repo, msg);
+                                        break;
+                                    case ActionType.Delete:
+                                        Delete(repo, msg);
+                                        break;
+                                    case ActionType.GetById:
+                                        await GetById(repo, msg);
+                                        break;
+                                    case ActionType.GetPaginated:
+                                        break;
+                                }
+                            }
+                        });
+                    }
+                    private async Task Insert(IRepository<{{source.Name}}> repo,
+                        EntityCommand<{{source.Name}}, Guid> msg)
+                    {
+                        EntityResult<{{source.Name}}> entityResult = new();
+                        entityResult.Data = await repo.InsertAsync(msg.Entity);
+                        entityResult.IsSuccess = true;
+                        Context.Sender.Tell(entityResult);
+                    }
+                    private async Task InsertList(IRepository<{{source.Name}}> repo,
+                        EntityCommand<{{source.Name}}, Guid> msg)
+                    {
+                        EntityResult<List<{{source.Name}}>> entityResult = new();
+                        await repo.InsertAsync(msg.Entities);
+                        entityResult.IsSuccess = true;
+                        Context.Sender.Tell(entityResult);
+                    }
+                    private void Update(IRepository<{{source.Name}}> repo,
+                       EntityCommand<{{source.Name}}, Guid> msg)
+                    {
+                        EntityResult<{{source.Name}}> entityResult = new();
+                        repo.Update(msg.Entity);
+                        entityResult.IsSuccess = true;
+                        Context.Sender.Tell(entityResult);
+                    }
+                    private void Delete(IRepository<{{source.Name}}> repo,
+                       EntityCommand<{{source.Name}}, Guid> msg)
+                    {
+                        EntityResult<{{source.Name}}> entityResult = new();
+                        repo.Delete(msg.Id);
+                        entityResult.IsSuccess = true;
+                        entityResult.Details = new() { { "Id", msg.Id } };
+                        Context.Sender.Tell(entityResult);
+                    }
+                    private async Task GetById(IRepository<{{source.Name}}> repo,
+                       EntityCommand<{{source.Name}}, Guid> msg)
+                    {
+                        EntityResult<{{source.Name}}> entityResult = new();
+                        entityResult.Data = await repo.GetAsync(msg.Id);
+                        entityResult.IsSuccess = true;
+                        Context.Sender.Tell(entityResult);
+                    }
+                }
+
+            }
+            
+            """;
+
+            spc.AddSource($"{source.Name}Controller.g.cs", SourceText.From(sourceText, Encoding.UTF8));
+
         });
     }
 
-    private static void GenerateServiceClass(
-        SourceProductionContext context,
-        INamedTypeSymbol entity,
-        INamedTypeSymbol rootService,
-        INamedTypeSymbol iRepository)
-    {
-        var namespaceName = "CleanBusiness.Generated";
-        var className = $"{entity.Name}Service";
-        var interfaceName = $"I{entity.Name}Service";
-
-        var source = $$"""
-            using CleanBase.Entities;
-            using {{rootService.ContainingNamespace}};
-            using {{iRepository.ContainingNamespace}};
-
-            namespace {{namespaceName}};
-
-            public partial class {{className}} : RootService<{{entity.Name}}>, {{interfaceName}}
-            {
-                public {{className}}(IRepository<{{entity.Name}}> repository) 
-                    : base(repository)
-                {
-                }
-            }
-            """;
-
-        context.AddSource($"{className}.g.cs", SourceText.From(source, Encoding.UTF8));
-        var sourceInterface = $$"""
-            using CleanBase.CleanAbstractions.CleanBusiness;
-            using CleanBase.Entities;
-            namespace {{namespaceName}};
-            public interface {{interfaceName}} : IRootService<{{entity.Name}}> {}
-            """;
-        context.AddSource($"{interfaceName}.g.cs", SourceText.From(sourceInterface, Encoding.UTF8));
-    }
 
     private static IEnumerable<INamedTypeSymbol> GetAllTypes(INamespaceSymbol namespaceSymbol)
     {
@@ -108,9 +154,4 @@ public class ServiceGenerator : IIncrementalGenerator
            SymbolEqualityComparer.Default.Equals(symbol.BaseType, entityRoot); ;
     }
 
-    private static INamedTypeSymbol? GetGenericInterface(Compilation compilation, string metadataName)
-    {
-      var z = compilation.GetType().GetMembers();
-      return  compilation.GetTypeByMetadataName(metadataName);
-    }
 }

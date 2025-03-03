@@ -1,25 +1,26 @@
 ﻿using Akka.Actor;
+using CleanBase;
 using CleanBase.CleanAbstractions.CleanOperation;
 using CleanBase.Dtos;
-using CleanBase.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 
 namespace CleanAPI.Controllers
 {
+    [ApiController]
     [Route("api/[controller]/[action]")]
-    public class TodoListActorController(IActorRef actorRef) : ControllerBase
+    public class AppBaseController<TEntity>(IActorRef actorRef) : ControllerBase where TEntity : class, IEntityRoot
     {
         [HttpGet]
         [EnableQuery]
-        public IActionResult Get([FromServices] IRepository<TodoList> repository)
+        public IActionResult Get([FromServices] IRepository<TEntity> repository)
         {
             return Ok(repository.Query());
         }
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] TodoList entity)
+        public async Task<IActionResult> Post([FromBody] TEntity entity)
         {
-            var result = await actorRef.Ask<EntityResult<TodoList>>(new EntityCommand<TodoList, Guid>
+            var result = await actorRef.Ask<EntityResult<TEntity>>(new EntityCommand<TEntity, Guid>
             {
                 Entity = entity,
                 Action = ActionType.Insert
@@ -27,9 +28,9 @@ namespace CleanAPI.Controllers
             return Ok(result);
         }
         [HttpPost("[action]")]
-        public async Task<IActionResult> InsertList([FromBody] List<TodoList> entity)
+        public async Task<IActionResult> InsertList([FromBody] List<TEntity> entity)
         {
-            var result = await actorRef.Ask<EntityResult<List<TodoList>>>(new EntityCommand<TodoList, Guid>
+            var result = await actorRef.Ask<EntityResult<List<TEntity>>>(new EntityCommand<TEntity, Guid>
             {
                 Entities = entity,
                 Action = ActionType.InsertList
@@ -37,9 +38,9 @@ namespace CleanAPI.Controllers
             return Ok(result);
         }
         [HttpPut]
-        public async Task<IActionResult> Put([FromBody] TodoList entity)
+        public async Task<IActionResult> Put([FromBody] TEntity entity)
         {
-            var result = await actorRef.Ask<TodoList>(new EntityCommand<TodoList, Guid>
+            var result = await actorRef.Ask<TEntity>(new EntityCommand<TEntity, Guid>
             {
                 Entity = entity,
                 Action = ActionType.Update
@@ -49,7 +50,7 @@ namespace CleanAPI.Controllers
         [HttpDelete]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var result = await actorRef.Ask<EntityResult<TodoList>>(new EntityCommand<TodoList, Guid>
+            var result = await actorRef.Ask<EntityResult<TEntity>>(new EntityCommand<TEntity, Guid>
             {
                 Id = id,
                 Action = ActionType.Delete

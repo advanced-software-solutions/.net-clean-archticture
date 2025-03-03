@@ -68,30 +68,9 @@ namespace CleanAPI
                 x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles)
             .AddOData(opt => opt.Select().Filter().Expand().Count().SetMaxTop(10).EnableQueryFeatures()
             .AddRouteComponents("odata", GetEdmModel(), defaultBatchHandler));
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-            builder.Services.AddFluentValidationRulesToSwagger();
 
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-            var assembly = typeof(EntityRoot).Assembly; // I actually use Assembly.LoadFile with well-known names 
-            var types = assembly.ExportedTypes
-               // filter types that are unrelated
-               .Where(x => x.IsClass && x.IsPublic && x.BaseType == typeof(CleanBase.EntityRoot));
-
-            foreach (var type in types)
-            {
-                // assume that we want to inject any class that implements an interface
-                // whose name is the type's name prefixed with I
-                var serviceName = type.Name + "Service";
-                var businessAssembly = typeof(RootService<>).Assembly;
-                var service = businessAssembly.ExportedTypes.FirstOrDefault(y => y.Name == serviceName);
-                if (service != null)
-                {
-                    builder.Services.AddScoped(businessAssembly.ExportedTypes.FirstOrDefault(y => y.Name == $"I{type.Name}Service") , service);
-                }
-            }
-            //builder.Services.AddScoped<ITodoListService, TodoListService>();
+            
 
             builder.Services.AddSingleton(provider =>
             {

@@ -27,18 +27,15 @@ namespace CleanAPIGenerator
             {
 
                 var sourceText = $$"""
+
+            using Akka.Actor;
             using CleanBase.Entities;
-            using CleanBase.CleanAbstractions.CleanBusiness;
-            using CleanBusiness.Generated;
 
             namespace CleanAPI.Controllers;
 
-            public partial class {{source.Name}}Controller : BaseController<{{source.Name}}>
+            public partial class {{source.Name}}Controller(IActorRef actorRef) : AppBaseController<{{source.Name}}>(actorRef)
             {
-                public {{source.Name}}Controller(I{{source.Name}}Service service):base(service)
-                {
 
-                }
             }
             """;
 
