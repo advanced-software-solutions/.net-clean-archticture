@@ -1,66 +1,65 @@
-﻿namespace CleanOperation
+﻿namespace CleanOperation;
+
+public class CleanAspects
 {
-    public class CleanAspects
+    public virtual void Aspect(Action operation)
     {
-        public virtual void Aspect(Action operation)
+        try
         {
-            try
-            {
-                operation();
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
-            finally
-            {
-
-            }
+            operation();
         }
-        public virtual T Aspect<T>(Func<T> operation)
+        catch (Exception ex)
         {
-            try
-            {
-                return operation();
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
-            finally
-            {
-
-            }
+            throw;
         }
-        public virtual async Task<TResult> AspectAsync<TResult>(Func<Task<TResult>> operation)
+        finally
         {
-            try
-            {
-                return await operation();
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
-            finally
-            {
 
-            }
         }
-        public virtual async Task AspectVoidAsync(Func<Task> operation)
+    }
+    public virtual T Aspect<T>(Func<T> operation)
+    {
+        try
         {
-            try
-            {
-                await operation();
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
-            finally
-            {
+            return operation();
+        }
+        catch (Exception ex)
+        {
+            throw;
+        }
+        finally
+        {
 
-            }
+        }
+    }
+    public virtual async Task<TResult> AspectAsync<TResult>(Func<Task<TResult>> operation)
+    {
+        try
+        {
+            return await operation();
+        }
+        catch (Exception ex)
+        {
+            throw;
+        }
+        finally
+        {
+
+        }
+    }
+    public virtual async Task AspectVoidAsync(Func<Task> operation)
+    {
+        try
+        {
+            await operation();
+        }
+        catch (Exception ex)
+        {
+            throw;
+        }
+        finally
+        {
+
         }
     }
 }

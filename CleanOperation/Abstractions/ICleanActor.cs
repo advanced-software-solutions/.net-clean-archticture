@@ -1,6 +1,5 @@
-﻿namespace CleanOperation.Abstractions
+﻿namespace CleanOperation.Abstractions;
+
+public interface ICleanActor
 {
-    public interface ICleanActor
-    {
-    }
 }

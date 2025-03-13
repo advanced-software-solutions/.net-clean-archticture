@@ -1,11 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace CleanBase
+namespace CleanBase;
+
+public interface IEntityRoot
 {
-    public interface IEntityRoot
-    {
-        Guid Id { get; set; }
-        [Timestamp]
-        byte[] Rowversion { get; set; }
-    }
+    Guid Id { get; set; }
+    [Timestamp]
+    byte[] Rowversion { get; set; }
 }

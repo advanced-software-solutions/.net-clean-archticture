@@ -1,8 +1,7 @@
-﻿namespace CleanBase.Entities
+﻿namespace CleanBase.Entities;
+
+public class CleanConfiguration : EntityRoot
 {
-    public class CleanConfiguration : EntityRoot
-    {
-        public string Name { get; set; }
-        public List<CleanConfigurationItem>? ConfigurationItems { get; set; }
-    }
+    public string Name { get; set; }
+    public List<CleanConfigurationItem>? ConfigurationItems { get; set; }
 }

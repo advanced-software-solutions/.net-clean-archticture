@@ -1,6 +1,5 @@
-﻿namespace CleanBase.CleanAbstractions.CleanOperation
+﻿namespace CleanBase.CleanAbstractions.CleanOperation;
+
+public interface ITodoAttachmentOperation
 {
-    public interface ITodoAttachmentOperation
-    {
-    }
 }
