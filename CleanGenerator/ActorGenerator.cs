@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 
 [Generator]
-public class ServiceGenerator : IIncrementalGenerator
+public class ActorGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {

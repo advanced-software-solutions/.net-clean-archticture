@@ -34,7 +34,7 @@ public class Program
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
         builder.Services.AddOpenApi();
         builder.Services.AddSerilog();
-        builder.Services.AddFastEndpoints();
+        //builder.Services.AddFastEndpoints();
         // Add services to the container.
         builder.Services.AddDbContext<AppDataContext>(y =>
         {
@@ -88,7 +88,7 @@ public class Program
 
         var app = builder.Build();
 
-        app.UseFastEndpoints();
+        //app.UseFastEndpoints();
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {

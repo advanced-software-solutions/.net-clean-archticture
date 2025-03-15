@@ -1,4 +1,6 @@
-﻿namespace CleanBase.Entities;
+﻿using System.Text.Json.Serialization;
+
+namespace CleanBase.Entities;
 
 public class TodoList : EntityRoot
 {
@@ -6,3 +8,4 @@ public class TodoList : EntityRoot
     public DateTime DueDate { get; set; }
     public IList<TodoItem>? TodoItems { get; set; }
 }
+
