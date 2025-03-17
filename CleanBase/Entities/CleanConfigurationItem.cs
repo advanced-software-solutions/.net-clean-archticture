@@ -1,6 +1,6 @@
 ﻿namespace CleanBase.Entities;
 
-public class CleanConfigurationItem : EntityRoot
+public partial class CleanConfigurationItem : EntityRoot
 {
     public string Key { get; set; }
     public string Value { get; set; }

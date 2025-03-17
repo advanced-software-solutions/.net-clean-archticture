@@ -1,16 +1,11 @@
 using CleanBase;
-using CleanBase.CleanAbstractions.CleanBusiness;
 using CleanBase.Entities;
 using CleanBusiness;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using System.Diagnostics;
 using System.Reflection;
-using CleanBase.Generated;
-using System.Text.Json.Serialization;
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 
 namespace CleanAPI.Controllers
 {
@@ -30,20 +25,21 @@ namespace CleanAPI.Controllers
 
         private readonly ILogger<WeatherForecastController> _logger;
 
-      
+
 
         [HttpGet(Name = "GetWeatherForecast")]
         public IActionResult Get()
         {
             TodoList item = new TodoList();
             item.Title = "test";
-            var jsonString = "test"; // JsonSerializer.Serialize(item!, TodoListContext.);
+            item.DueDate = DateTime.Now;
+            var jsonString = JsonSerializer.Serialize(item);
             return Ok(jsonString);
         }
         [HttpGet("Config")]
         public IActionResult Config()
         {
-            
+
             var data = _configuration["App:Title"];
             return Ok(data);
         }
@@ -51,7 +47,7 @@ namespace CleanAPI.Controllers
         [HttpGet("[action]")]
         public IActionResult TestGenerator()
         {
-            
+
             Compilation inputCompilation = CreateCompilation(@"
         namespace MyCode
         {

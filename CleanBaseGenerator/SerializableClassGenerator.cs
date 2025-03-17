@@ -53,10 +53,10 @@ public class SerializableClassGenerator : IIncrementalGenerator
             namespace CleanBase.Generated;
 
             [JsonSerializable(typeof(List<{{className}}>))]
-            public sealed partial class {{className}}ListContext : JsonSerializerContext { }
+            public partial class {{className}}ListContext : JsonSerializerContext { }
 
             [JsonSerializable(typeof({{className}}))]
-            public sealed partial class {{className}}Context : JsonSerializerContext { }
+            public partial class {{className}}Context : JsonSerializerContext { }
 
            
             
