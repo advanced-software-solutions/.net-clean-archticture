@@ -1,3 +1,5 @@
+using Azure.Core;
+using Azure;
 using CleanBase;
 using CleanBase.Entities;
 using CleanBusiness;
@@ -33,8 +35,7 @@ namespace CleanAPI.Controllers
             TodoList item = new TodoList();
             item.Title = "test";
             item.DueDate = DateTime.Now;
-            var jsonString = JsonSerializer.Serialize(item);
-            return Ok(jsonString);
+            return Ok(item);
         }
         [HttpGet("Config")]
         public IActionResult Config()
@@ -71,5 +72,25 @@ namespace CleanAPI.Controllers
                new[] { MetadataReference.CreateFromFile(typeof(RootService<>).GetTypeInfo().Assembly.Location),
                        MetadataReference.CreateFromFile(typeof(EntityRoot).GetTypeInfo().Assembly.Location)},
                new CSharpCompilationOptions(OutputKind.ConsoleApplication));
+    }
+
+    public class MyEndpoint : FastEndpoints.EndpointWithoutRequest<TodoList>
+    {
+        public override void Configure()
+        {
+            Get("/api/user/create");
+            AllowAnonymous();
+            ResponseCache(60);
+            SerializerContext<AppJsonSerializerContext>();
+        }
+
+        public override async Task HandleAsync(CancellationToken ct)
+        {
+            await SendAsync(new TodoList()
+            {
+                Title = "Test",
+                DueDate = DateTime.Now,
+            });
+        }
     }
 }

@@ -10,8 +10,3 @@ public partial class TodoItem : EntityRoot
     public TodoList? TodoList { get; set; }
 }
 
-[JsonSerializable(typeof(List<TodoItem>))]
-public partial class TodoItemContextList : JsonSerializerContext { }
-
-[JsonSerializable(typeof(TodoItem))]
-public partial class TodoItemContext : JsonSerializerContext { }

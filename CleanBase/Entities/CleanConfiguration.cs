@@ -1,4 +1,6 @@
-﻿namespace CleanBase.Entities;
+﻿using System.Text.Json.Serialization;
+
+namespace CleanBase.Entities;
 
 public partial class CleanConfiguration : EntityRoot
 {

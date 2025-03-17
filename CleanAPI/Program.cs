@@ -2,6 +2,7 @@ using Akka.Actor;
 using Akka.DependencyInjection;
 using CleanBase;
 using CleanBase.CleanAbstractions.CleanOperation;
+using CleanBase.Entities;
 using CleanBase.Validator;
 using CleanBusiness.Actors;
 using CleanOperation.ConfigProvider;
@@ -13,6 +14,7 @@ using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.Batch;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Options;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using Scalar.AspNetCore;
@@ -34,7 +36,7 @@ public class Program
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
         builder.Services.AddOpenApi();
         builder.Services.AddSerilog();
-        //builder.Services.AddFastEndpoints();
+        builder.Services.AddFastEndpoints().AddResponseCaching();
         // Add services to the container.
         builder.Services.AddDbContext<AppDataContext>(y =>
         {
@@ -61,8 +63,10 @@ public class Program
         builder.Services.AddFluentValidationClientsideAdapters();
         builder.Services.AddValidatorsFromAssemblyContaining<TodoListValidation>(); ;
         builder.Services.AddControllers()
-            .AddJsonOptions(x =>
-            x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles)
+            .AddJsonOptions(x => {
+                x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                x.JsonSerializerOptions.TypeInfoResolverChain.Add(AppJsonSerializerContext.Default);
+            })
         .AddOData(opt => opt.Select().Filter().Expand().Count().SetMaxTop(10).EnableQueryFeatures()
         .AddRouteComponents("odata", GetEdmModel(), defaultBatchHandler));
 
@@ -88,7 +92,7 @@ public class Program
 
         var app = builder.Build();
 
-        //app.UseFastEndpoints();
+        app.UseResponseCaching().UseFastEndpoints();
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
@@ -104,6 +108,10 @@ public class Program
 
         app.MapControllers();
 
+        app.MapGet("/api/SampleMinimal",async() =>
+        {
+            return Results.Ok(new TodoList { Title = "Test me", DueDate =DateTime.Now });
+        });
         app.Run();
     }
     private static IEdmModel GetEdmModel()

@@ -32,6 +32,8 @@ public class ActorGenerator : IIncrementalGenerator
             using CleanBase.Entities;
             using CleanOperation.Abstractions;
             using Microsoft.Extensions.DependencyInjection;
+            using System.Text.Json.Serialization;
+            using CleanBase.Entities;
 
             namespace CleanBusiness.Actors
             {
@@ -115,7 +117,7 @@ public class ActorGenerator : IIncrementalGenerator
             
             """;
 
-            spc.AddSource($"{source.Name}Controller.g.cs", SourceText.From(sourceText, Encoding.UTF8));
+            spc.AddSource($"{source.Name}Actor.g.cs", SourceText.From(sourceText, Encoding.UTF8));
 
         });
     }

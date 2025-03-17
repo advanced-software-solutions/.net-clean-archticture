@@ -16,8 +16,13 @@ public class SerializableClassGenerator : IIncrementalGenerator
                 .Where(static s => s is not null && IsInheritingFromEntityRoot(s!));
 
         // Generate source code for each found class
+
         context.RegisterSourceOutput(entityRootClasses,
-            static (spc, classSymbol) => GenerateClass(spc, classSymbol!));
+            static (spc, classSymbol) =>
+            {
+
+                GenerateClass(spc, classSymbol!);
+            });
     }
 
     private static INamedTypeSymbol? GetClassSymbol(GeneratorSyntaxContext context)
@@ -52,13 +57,9 @@ public class SerializableClassGenerator : IIncrementalGenerator
 
             namespace CleanBase.Generated;
 
-            [JsonSerializable(typeof(List<{{className}}>))]
-            public partial class {{className}}ListContext : JsonSerializerContext { }
-
+            /*[JsonSerializable(typeof(List<{{className}}>))]
             [JsonSerializable(typeof({{className}}))]
-            public partial class {{className}}Context : JsonSerializerContext { }
-
-           
+            public partial class EntityRootContextList : JsonSerializerContext { }*/           
             
             """;
 
