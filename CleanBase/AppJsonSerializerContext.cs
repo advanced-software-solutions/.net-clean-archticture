@@ -1,9 +1,15 @@
-﻿using CleanBase.Entities;
+﻿using CleanBase.Dtos;
+using CleanBase.Entities;
 using System.Text.Json.Serialization;
 
 namespace CleanBase
 {
     [JsonSerializable(typeof(EntityRoot))]
+    [JsonSerializable(typeof(EntityResult<>))]
+    [JsonSerializable(typeof(EntityResult<TodoList>))]
+    [JsonSerializable(typeof(EntityResult<TodoItem>))]
+    [JsonSerializable(typeof(EntityResult<List<TodoList>>))]
+    [JsonSerializable(typeof(EntityResult<List<TodoItem>>))]
     [JsonSerializable(typeof(TodoItem))]
     [JsonSerializable(typeof(TodoList))]
     [JsonSerializable(typeof(CleanConfiguration))]

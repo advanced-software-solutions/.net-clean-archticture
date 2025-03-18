@@ -92,7 +92,8 @@ public class Program
 
         var app = builder.Build();
 
-        app.UseResponseCaching().UseFastEndpoints();
+        app.UseResponseCaching()
+            .UseFastEndpoints(y => y.Serializer.Options.ReferenceHandler = ReferenceHandler.IgnoreCycles);
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
