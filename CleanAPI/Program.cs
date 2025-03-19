@@ -1,4 +1,5 @@
 using Akka.Actor;
+using Akka.Actor.Dsl;
 using Akka.DependencyInjection;
 using CleanBase;
 using CleanBase.CleanAbstractions.CleanOperation;
@@ -86,14 +87,20 @@ public class Program
             var system = ActorSystem.Create("CleanSystem", actorSystemSetup);
             return system;
         });
-
-        // Register MarketDataProcessorActor with dependency injection
-        builder.Services.AddSingleton(provider =>
+        var assembly = typeof(ICleanActor).Assembly;
+        var types = assembly.ExportedTypes
+           // filter types that are unrelated
+           .Where(x => x.IsClass && x.IsPublic && x.GetInterface(nameof(ICleanActor)) != null );
+        foreach (var type in types)
         {
-            var actorSystem = provider.GetRequiredService<ActorSystem>();
-            var props = DependencyResolver.For(actorSystem).Props<TodoListActor>();
-            return actorSystem.ActorOf(props, nameof(TodoListActor));
-        });
+            builder.Services.AddSingleton(provider =>
+            {
+                var actorSystem = provider.GetRequiredService<ActorSystem>();
+                var props = DependencyResolver.For(actorSystem).Props(type);
+                return actorSystem.ActorOf(props, type.Name);
+            });
+        }
+
 
         var app = builder.Build();
         app.UseEnyimMemcached();
@@ -114,15 +121,11 @@ public class Program
 
         app.MapControllers();
 
-        app.MapGet("/api/SampleMinimal",async() =>
-        {
-            return Results.Ok(new TodoList { Title = "Test me", DueDate =DateTime.Now });
-        });
         app.Run();
     }
     private static IEdmModel GetEdmModel()
     {
-        var assembly = typeof(EntityRoot).Assembly; // I actually use Assembly.LoadFile with well-known names 
+        var assembly = typeof(EntityRoot).Assembly;
         var types = assembly.ExportedTypes
            // filter types that are unrelated
            .Where(x => x.IsClass && x.IsPublic && x.BaseType == typeof(CleanBase.EntityRoot));

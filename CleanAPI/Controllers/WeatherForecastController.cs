@@ -1,14 +1,10 @@
+using Akka.Actor;
+using CleanBase.CleanAbstractions.CleanOperation;
+using CleanBase.Dtos;
 using CleanBase;
 using CleanBase.Entities;
-using CleanBusiness;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using System.Reflection;
-using CleanBase.CleanAbstractions.CleanOperation;
-using Akka.Actor;
-using CleanBase.Dtos;
 using Enyim.Caching;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CleanAPI.Controllers
 {
@@ -46,126 +42,8 @@ namespace CleanAPI.Controllers
             return Ok(data);
         }
 
-        [HttpGet("[action]")]
-        public IActionResult TestGenerator()
-        {
 
-            Compilation inputCompilation = CreateCompilation(@"
-        namespace MyCode
-        {
-            public class Program
-            {
-                public static void Main(string[] args)
-                {
-                }
-            }
-        }
-        ");
-            ActorGenerator serviceGenerator = new ActorGenerator();
-            GeneratorDriver driver = CSharpGeneratorDriver.Create(serviceGenerator);
-            driver = driver.RunGeneratorsAndUpdateCompilation(inputCompilation, out var outputCompilation, out var diagnostics);
-            return Ok("test");
-        }
 
-        private static Compilation CreateCompilation(string source)
-           => CSharpCompilation.Create("compilation",
-               new[] { CSharpSyntaxTree.ParseText(source) },
-               new[] { MetadataReference.CreateFromFile(typeof(RootService<>).GetTypeInfo().Assembly.Location),
-                       MetadataReference.CreateFromFile(typeof(EntityRoot).GetTypeInfo().Assembly.Location)},
-               new CSharpCompilationOptions(OutputKind.ConsoleApplication));
-    }
 
-    public class MyEndpoint : FastEndpoints.EndpointWithoutRequest<TodoList>
-    {
-        public override void Configure()
-        {
-            Get("/api/user/create");
-            AllowAnonymous();
-            ResponseCache(60);
-            SerializerContext<AppJsonSerializerContext>();
-        }
-
-        public override async Task HandleAsync(CancellationToken ct)
-        {
-            await SendAsync(new TodoList()
-            {
-                Title = "Test",
-                DueDate = DateTime.Now,
-            });
-        }
-    }
-    public class TodoListCreate : FastEndpoints.Endpoint<TodoList, EntityResult<TodoList>>
-    {
-        public IRepository<TodoList> _repository { get; set; }
-        public IActorRef _actorRef { get; set; }
-        public override void Configure()
-        {
-            Post("/api/TodoList/Create");
-            AllowAnonymous();
-            SerializerContext<AppJsonSerializerContext>();
-        }
-
-        public override async Task HandleAsync(TodoList req,CancellationToken ct)
-        {
-            var result = await _actorRef.Ask<EntityResult<TodoList>>(new EntityCommand<TodoList, Guid>
-            {
-                Entity = req,
-                Action = ActionType.Insert
-            });
-            await SendAsync(result);
-        }
-    }
-    public class TodoListListCreate : FastEndpoints.Endpoint<List<TodoList>, EntityResult<List<TodoList>>>
-    {
-        public IRepository<TodoList> _repository { get; set; }
-        public IActorRef _actorRef { get; set; }
-        public override void Configure()
-        {
-            Post("/api/TodoList/CreateList");
-            AllowAnonymous();
-            SerializerContext<AppJsonSerializerContext>();
-        }
-
-        public override async Task HandleAsync(List<TodoList> req,CancellationToken ct)
-        {
-            var result = await _actorRef.Ask<EntityResult<List<TodoList>>>(new EntityCommand<TodoList, Guid>
-            {
-                Entities = req,
-                Action = ActionType.InsertList
-            });
-            await SendAsync(result);
-        }
-    }
-
-    public class TodoListGetById : FastEndpoints.EndpointWithoutRequest<EntityResult<TodoList>>
-    {
-        public IRepository<TodoList> _repository { get; set; }
-        public IActorRef _actorRef { get; set; }
-        public IMemcachedClient _factory { get; set; }
-        public override void Configure()
-        {
-            Get("/api/TodoList/GetById/{id}");
-            AllowAnonymous();
-            ResponseCache(30);
-            SerializerContext<AppJsonSerializerContext>();
-        }
-
-        public override async Task HandleAsync(CancellationToken ct)
-        {
-            var req = Route<Guid>("id");
-            var exists = await _factory.GetAsync<EntityResult<TodoList>>("TodoList:id:" + req);
-            if (exists.HasValue)
-            {
-                await SendAsync((await _factory.GetAsync<EntityResult<TodoList>>("TodoList:id:" + req)).Value);
-                return;
-            }
-            var result = await _actorRef.Ask<EntityResult<TodoList>>(new EntityCommand<TodoList, Guid>
-            {
-                Id = req,
-                Action = ActionType.GetById
-            });
-            await _factory.SetAsync("TodoList:id:" + req, result, TimeSpan.FromSeconds(30));
-            await SendAsync(result);
-        }
     }
 }

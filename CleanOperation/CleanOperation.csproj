@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka" Version="1.5.38" />
-    <PackageReference Include="Akka.DependencyInjection" Version="1.5.38" />
+    <PackageReference Include="Akka" Version="1.5.39" />
+    <PackageReference Include="Akka.DependencyInjection" Version="1.5.39" />
     <PackageReference Include="Akka.Logger.Serilog" Version="1.5.25" />
     <PackageReference Include="Ardalis.GuardClauses" Version="5.0.0" />
     <PackageReference Include="Dapper" Version="2.1.66" />
@@ -25,6 +25,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CleanBase\CleanBase.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Abstractions\" />
   </ItemGroup>
 
 </Project>

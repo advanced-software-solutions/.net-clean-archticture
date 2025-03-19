@@ -30,6 +30,10 @@ public class ControllerGenerator : IIncrementalGenerator
 
         using Akka.Actor;
         using CleanBase.Entities;
+        using CleanBase.Dtos;
+        using Enyim.Caching;
+        using CleanBase.CleanAbstractions.CleanOperation;
+        using CleanBase;
 
         namespace CleanAPI.Controllers;
 
@@ -37,6 +41,76 @@ public class ControllerGenerator : IIncrementalGenerator
         {
 
         }
+
+        #region FastEdnpoints
+
+                public class {{source.Name}}Create : FastEndpoints.Endpoint<{{source.Name}}, {{source.Name}}>
+                {
+                    public IRepository<{{source.Name}}> _repository { get; set; }
+                    public override void Configure()
+                    {
+                        Post("/api/{{source.Name}}/Create");
+        #if DEBUG
+                        AllowAnonymous();
+        #endif
+                        SerializerContext<AppJsonSerializerContext>();
+                    }
+
+                    public override async Task HandleAsync({{source.Name}} req, CancellationToken ct)
+                    {
+                        var result = await _repository.InsertAsync(req);
+                        await SendAsync(result);
+                    }
+                }
+                public class {{source.Name}}ListCreate : FastEndpoints.Endpoint<List<{{source.Name}}>, List<{{source.Name}}>>
+                {
+                    public IRepository<{{source.Name}}> _repository { get; set; }
+                    public override void Configure()
+                    {
+                        Post("/api/{{source.Name}}/CreateList");
+        #if DEBUG
+                        AllowAnonymous();
+        #endif
+                        SerializerContext<AppJsonSerializerContext>();
+                    }
+
+                    public override async Task HandleAsync(List<{{source.Name}}> req, CancellationToken ct)
+                    {
+                        await _repository.InsertAsync(req);
+                        await SendAsync(req);
+                    }
+                }
+
+                public class {{source.Name}}GetById : FastEndpoints.EndpointWithoutRequest<{{source.Name}}>
+                {
+                    public IRepository<{{source.Name}}> _repository { get; set; }
+                    public IMemcachedClient _factory { get; set; }
+                    public override void Configure()
+                    {
+                        Get("/api/{{source.Name}}/GetById/{id}");
+        #if DEBUG
+                        AllowAnonymous();
+        #endif
+                        ResponseCache(30);
+                        SerializerContext<AppJsonSerializerContext>();
+                    }
+
+                    public override async Task HandleAsync(CancellationToken ct)
+                    {
+                        var req = Route<Guid>("id");
+                        var exists = await _factory.GetAsync<EntityResult<{{source.Name}}>>("{{source.Name}}:id:" + req);
+                        if (exists.HasValue)
+                        {
+                            await SendAsync((await _factory.GetAsync<{{source.Name}}>("{{source.Name}}:id:" + req)).Value);
+                            return;
+                        }
+                        var result = await _repository.GetAsync(req);
+                        await _factory.SetAsync("{{source.Name}}:id:" + req, result, TimeSpan.FromSeconds(30));
+                        await SendAsync(result);
+                    }
+                }
+
+        #endregion
         """;
 
             spc.AddSource($"{source.Name}Controller.g.cs", SourceText.From(sourceText, Encoding.UTF8));

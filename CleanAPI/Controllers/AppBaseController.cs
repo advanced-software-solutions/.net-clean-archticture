@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 
 namespace CleanAPI.Controllers;
-[Authorize]
+//[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class AppBaseController<TEntity>(IActorRef actorRef) : ControllerBase where TEntity : class, IEntityRoot

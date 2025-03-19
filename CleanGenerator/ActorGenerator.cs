@@ -30,7 +30,7 @@ public class ActorGenerator : IIncrementalGenerator
             using CleanBase.CleanAbstractions.CleanOperation;
             using CleanBase.Dtos;
             using CleanBase.Entities;
-            using CleanOperation.Abstractions;
+            using CleanBusiness.Actors;
             using Microsoft.Extensions.DependencyInjection;
             using System.Text.Json.Serialization;
             using CleanBase.Entities;
