@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace CleanBase
 {
+    [JsonSerializable(typeof(Guid))]
     [JsonSerializable(typeof(EntityRoot))]
     [JsonSerializable(typeof(EntityResult<>))]
     [JsonSerializable(typeof(EntityResult<TodoList>))]

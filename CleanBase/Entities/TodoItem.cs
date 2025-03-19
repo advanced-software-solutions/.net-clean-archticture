@@ -1,7 +1,9 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace CleanBase.Entities;
 
+[Table("[dbo].[TodoItem]")]
 public partial class TodoItem : EntityRoot
 {
     public string Title { get; set; }

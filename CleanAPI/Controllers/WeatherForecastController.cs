@@ -1,5 +1,3 @@
-using Azure.Core;
-using Azure;
 using CleanBase;
 using CleanBase.Entities;
 using CleanBusiness;
@@ -7,12 +5,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.Reflection;
-using System.Text.Json;
 using CleanBase.CleanAbstractions.CleanOperation;
-using CleanOperation.DataAccess;
 using Akka.Actor;
 using CleanBase.Dtos;
-using static Dapper.SqlMapper;
+using Enyim.Caching;
 
 namespace CleanAPI.Controllers
 {
@@ -137,6 +133,38 @@ namespace CleanAPI.Controllers
                 Entities = req,
                 Action = ActionType.InsertList
             });
+            await SendAsync(result);
+        }
+    }
+
+    public class TodoListGetById : FastEndpoints.EndpointWithoutRequest<EntityResult<TodoList>>
+    {
+        public IRepository<TodoList> _repository { get; set; }
+        public IActorRef _actorRef { get; set; }
+        public IMemcachedClient _factory { get; set; }
+        public override void Configure()
+        {
+            Get("/api/TodoList/GetById/{id}");
+            AllowAnonymous();
+            ResponseCache(30);
+            SerializerContext<AppJsonSerializerContext>();
+        }
+
+        public override async Task HandleAsync(CancellationToken ct)
+        {
+            var req = Route<Guid>("id");
+            var exists = await _factory.GetAsync<EntityResult<TodoList>>("TodoList:id:" + req);
+            if (exists.HasValue)
+            {
+                await SendAsync((await _factory.GetAsync<EntityResult<TodoList>>("TodoList:id:" + req)).Value);
+                return;
+            }
+            var result = await _actorRef.Ask<EntityResult<TodoList>>(new EntityCommand<TodoList, Guid>
+            {
+                Id = req,
+                Action = ActionType.GetById
+            });
+            await _factory.SetAsync("TodoList:id:" + req, result, TimeSpan.FromSeconds(30));
             await SendAsync(result);
         }
     }

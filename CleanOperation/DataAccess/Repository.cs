@@ -1,10 +1,11 @@
-﻿using Akka.Util.Internal;
-using Ardalis.GuardClauses;
+﻿using Ardalis.GuardClauses;
 using CleanBase;
 using CleanBase.CleanAbstractions.CleanOperation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.Extensions.Configuration;
+
 using System.Linq.Expressions;
 
 namespace CleanOperation.DataAccess;
@@ -12,11 +13,12 @@ namespace CleanOperation.DataAccess;
 public class Repository<T> : RepoAspects, IRepository<T> where T : class, IEntityRoot
 {
     private readonly AppDataContext _dataContext;
-
-    public Repository(AppDataContext dataContext) : base(dataContext)
+    private readonly IConfiguration _configuration;
+    public Repository(AppDataContext dataContext, IConfiguration configuration) : base(dataContext)
     {
         _dataContext = dataContext;
         Guard.Against.Null(_dataContext);
+        _configuration = configuration;
     }
 
     public void Delete(T entity)
@@ -50,15 +52,12 @@ public class Repository<T> : RepoAspects, IRepository<T> where T : class, IEntit
     public T? Get(Guid id, Func<IQueryable<T>, IIncludableQueryable<T, object>>? navigations = null)
     {
         Guard.Against.NullOrEmpty(id);
-        return Aspect(() =>
+        var query = _dataContext.Set<T>().AsQueryable();
+        if (navigations != null)
         {
-            var query = _dataContext.Set<T>().AsQueryable();
-            if (navigations != null)
-            {
-                query = navigations.Invoke(query);
-            }
-            return query.FirstOrDefault(y => y.Id == id);
-        });
+            query = navigations.Invoke(query);
+        }
+        return query.FirstOrDefault(y => y.Id == id);
     }
 
     public T? Get(Expression<Func<T, bool>> query, Func<IQueryable<T>, IIncludableQueryable<T, object>>? navigations = null)
@@ -78,15 +77,12 @@ public class Repository<T> : RepoAspects, IRepository<T> where T : class, IEntit
     public async Task<T?> GetAsync(Guid id, Func<IQueryable<T>, IIncludableQueryable<T, object>>? navigations = null)
     {
         Guard.Against.NullOrEmpty(id);
-        return await AspectAsync(async () =>
+        var query = _dataContext.Set<T>().AsQueryable();
+        if (navigations != null)
         {
-            var query = _dataContext.Set<T>().AsQueryable();
-            if (navigations != null)
-            {
-                query = navigations.Invoke(query);
-            }
-            return await query.FirstOrDefaultAsync(y => y.Id == id);
-        });
+            query = navigations.Invoke(query);
+        }
+        return await query.FirstOrDefaultAsync(y => y.Id == id);
     }
 
     public async Task<T?> GetAsync(Expression<Func<T, bool>> query, Func<IQueryable<T>, IIncludableQueryable<T, object>>? navigations = null)

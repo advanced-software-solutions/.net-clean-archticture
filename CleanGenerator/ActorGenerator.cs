@@ -62,7 +62,7 @@ public class ActorGenerator : IIncrementalGenerator
                                         Delete(repo, msg);
                                         break;
                                     case ActionType.GetById:
-                                        await GetById(repo, msg);
+                                        GetById(repo, msg);
                                         break;
                                     case ActionType.GetPaginated:
                                         break;
@@ -103,11 +103,11 @@ public class ActorGenerator : IIncrementalGenerator
                         entityResult.Details = new() { { "Id", msg.Id } };
                         Context.Sender.Tell(entityResult);
                     }
-                    private async Task GetById(IRepository<{{source.Name}}> repo,
+                    private void GetById(IRepository<{{source.Name}}> repo,
                        EntityCommand<{{source.Name}}, Guid> msg)
                     {
                         EntityResult<{{source.Name}}> entityResult = new();
-                        entityResult.Data = await repo.GetAsync(msg.Id);
+                        entityResult.Data = repo.Get(msg.Id);
                         entityResult.IsSuccess = true;
                         Context.Sender.Tell(entityResult);
                     }

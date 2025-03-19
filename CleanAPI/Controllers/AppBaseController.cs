@@ -2,13 +2,14 @@
 using CleanBase;
 using CleanBase.CleanAbstractions.CleanOperation;
 using CleanBase.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 
 namespace CleanAPI.Controllers;
-
+[Authorize]
 [ApiController]
-[Route("api/[controller]/[action]")]
+[Route("api/[controller]")]
 public class AppBaseController<TEntity>(IActorRef actorRef) : ControllerBase where TEntity : class, IEntityRoot
 {
     [HttpGet]

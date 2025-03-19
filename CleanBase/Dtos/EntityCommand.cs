@@ -16,5 +16,6 @@ public enum ActionType
     Update,
     Delete,
     GetById,
-    GetPaginated
+    GetPaginated,
+    GetByIdCache
 }

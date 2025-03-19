@@ -14,9 +14,9 @@ using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.Batch;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.Extensions.Options;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
+using RepoDb;
 using Scalar.AspNetCore;
 using Serilog;
 using System.Reflection;
@@ -34,6 +34,7 @@ public class Program
 
         var builder = WebApplication.CreateBuilder(args);
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+        builder.Services.AddEnyimMemcached();
         builder.Services.AddOpenApi();
         builder.Services.AddSerilog();
         builder.Services.AddFastEndpoints().AddResponseCaching();
@@ -46,7 +47,11 @@ public class Program
             y.EnableDetailedErrors();
             y.EnableSensitiveDataLogging();
             y.ConfigureWarnings(y => y.Ignore(InMemoryEventId.TransactionIgnoredWarning));
+            y.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
         });
+        GlobalConfiguration
+    .Setup()
+    .UseSqlServer();
 #pragma warning disable ASP0013 // Suggest switching from using Configure methods to WebApplicationBuilder.Configuration
         builder.Host.ConfigureAppConfiguration((hostingContext, configBuilder) =>
         {
@@ -91,7 +96,7 @@ public class Program
         });
 
         var app = builder.Build();
-
+        app.UseEnyimMemcached();
         app.UseResponseCaching()
             .UseFastEndpoints(y => y.Serializer.Options.ReferenceHandler = ReferenceHandler.IgnoreCycles);
         // Configure the HTTP request pipeline.
