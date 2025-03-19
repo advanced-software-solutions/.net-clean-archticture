@@ -1,9 +1,7 @@
 using Akka.Actor;
-using Akka.Actor.Dsl;
 using Akka.DependencyInjection;
 using CleanBase;
 using CleanBase.CleanAbstractions.CleanOperation;
-using CleanBase.Entities;
 using CleanBase.Validator;
 using CleanBusiness.Actors;
 using CleanOperation.ConfigProvider;
@@ -13,6 +11,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.Batch;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.OData.Edm;
@@ -20,6 +19,7 @@ using Microsoft.OData.ModelBuilder;
 using RepoDb;
 using Scalar.AspNetCore;
 using Serilog;
+using System.IO.Compression;
 using System.Reflection;
 using System.Text.Json.Serialization;
 
@@ -39,11 +39,29 @@ public class Program
         builder.Services.AddOpenApi();
         builder.Services.AddSerilog();
         builder.Services.AddFastEndpoints().AddResponseCaching();
+        builder.Services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+        });
+
+        builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+        {
+            options.Level = CompressionLevel.Fastest;
+        });
+
+        builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+        {
+            options.Level = CompressionLevel.SmallestSize;
+        });
+        builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         // Add services to the container.
         builder.Services.AddDbContext<AppDataContext>(y =>
         {
             var dbConnection = builder.Configuration["ConnectionStrings:DefaultConnection"];
-            y.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]);
+            y.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"],
+                o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
             //y.UseInMemoryDatabase("Main");
             y.EnableDetailedErrors();
             y.EnableSensitiveDataLogging();
@@ -69,7 +87,8 @@ public class Program
         builder.Services.AddFluentValidationClientsideAdapters();
         builder.Services.AddValidatorsFromAssemblyContaining<TodoListValidation>(); ;
         builder.Services.AddControllers()
-            .AddJsonOptions(x => {
+            .AddJsonOptions(x =>
+            {
                 x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
                 x.JsonSerializerOptions.TypeInfoResolverChain.Add(AppJsonSerializerContext.Default);
             })
@@ -90,7 +109,7 @@ public class Program
         var assembly = typeof(ICleanActor).Assembly;
         var types = assembly.ExportedTypes
            // filter types that are unrelated
-           .Where(x => x.IsClass && x.IsPublic && x.GetInterface(nameof(ICleanActor)) != null );
+           .Where(x => x.IsClass && x.IsPublic && x.GetInterface(nameof(ICleanActor)) != null);
         foreach (var type in types)
         {
             builder.Services.AddSingleton(provider =>
@@ -103,6 +122,7 @@ public class Program
 
 
         var app = builder.Build();
+        app.UseResponseCompression();
         app.UseEnyimMemcached();
         app.UseResponseCaching()
             .UseFastEndpoints(y => y.Serializer.Options.ReferenceHandler = ReferenceHandler.IgnoreCycles);

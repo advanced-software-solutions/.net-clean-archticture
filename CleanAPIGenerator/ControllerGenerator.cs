@@ -1,7 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -19,7 +18,7 @@ public class ControllerGenerator : IIncrementalGenerator
                 var entityRoot = compilation.GetTypeByMetadataName("CleanBase.EntityRoot");
                 if (entityRoot == null) return Enumerable.Empty<INamedTypeSymbol>();
 
-                return  GetAllTypes(compilation.GlobalNamespace)
+                return GetAllTypes(compilation.GlobalNamespace)
                     .Where(t => IsValidEntity(t, compilation.Assembly, entityRoot));
             });
 
@@ -37,7 +36,7 @@ public class ControllerGenerator : IIncrementalGenerator
 
         namespace CleanAPI.Controllers;
 
-        public partial class {{source.Name}}Controller(IActorRef actorRef) : AppBaseController<{{source.Name}}>(actorRef)
+        public partial class {{source.Name}}Controller : AppBaseController<{{source.Name}}>
         {
 
         }
@@ -49,7 +48,7 @@ public class ControllerGenerator : IIncrementalGenerator
                     public IRepository<{{source.Name}}> _repository { get; set; }
                     public override void Configure()
                     {
-                        Post("/api/{{source.Name}}/Create");
+                        Post("/api/{{source.Name}}");
         #if DEBUG
                         AllowAnonymous();
         #endif
@@ -87,7 +86,7 @@ public class ControllerGenerator : IIncrementalGenerator
                     public IMemcachedClient _factory { get; set; }
                     public override void Configure()
                     {
-                        Get("/api/{{source.Name}}/GetById/{id}");
+                        Get("/api/{{source.Name}}/{id}");
         #if DEBUG
                         AllowAnonymous();
         #endif
@@ -107,6 +106,46 @@ public class ControllerGenerator : IIncrementalGenerator
                         var result = await _repository.GetAsync(req);
                         await _factory.SetAsync("{{source.Name}}:id:" + req, result, TimeSpan.FromSeconds(30));
                         await SendAsync(result);
+                    }
+                }
+
+                public class {{source.Name}}Delete : FastEndpoints.EndpointWithoutRequest
+                {
+                    public IRepository<{{source.Name}}> _repository { get; set; }
+                    public override void Configure()
+                    {
+                        Delete("/api/{{source.Name}}/{id}");
+        #if DEBUG
+                        AllowAnonymous();
+        #endif
+                        SerializerContext<AppJsonSerializerContext>();
+                    }
+
+                    public override async Task HandleAsync(CancellationToken ct)
+                    {
+                        var req = Route<Guid>("id");
+                        _repository.Delete(req);
+                        await SendOkAsync(ct);
+                    }
+                }
+
+                public class {{source.Name}}Update : FastEndpoints.Endpoint<{{source.Name}},{{source.Name}}>
+                {
+                    public IRepository<{{source.Name}}> _repository { get; set; }
+                    public override void Configure()
+                    {
+                        Put("/api/{{source.Name}}");
+        #if DEBUG
+                        AllowAnonymous();
+        #endif
+                        SerializerContext<AppJsonSerializerContext>();
+                    }
+
+                    public override async Task HandleAsync({{source.Name}} req, CancellationToken ct)
+                    {
+
+                        var result = _repository.Update(req);
+                        await SendAsync(result.Entity,cancellation: ct);
                     }
                 }
 
