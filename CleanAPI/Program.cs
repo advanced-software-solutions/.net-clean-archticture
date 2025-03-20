@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.OData.Batch;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using RepoDb;
@@ -21,6 +22,7 @@ using Scalar.AspNetCore;
 using Serilog;
 using System.IO.Compression;
 using System.Reflection;
+using System.Text;
 using System.Text.Json.Serialization;
 
 namespace CleanAPI;
@@ -34,7 +36,25 @@ public class Program
 .CreateLogger();
 
         var builder = WebApplication.CreateBuilder(args);
-        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+        builder.Services.AddAuthentication()
+        .AddJwtBearer(jwtOptions =>
+        {
+            jwtOptions.RequireHttpsMetadata = false;
+            jwtOptions.Authority = builder.Configuration["Auth:Authority"];
+            jwtOptions.Audience = builder.Configuration["Auth:Audience"];
+            jwtOptions.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateIssuerSigningKey = true,
+                ValidateLifetime = true,
+                ValidAudiences = builder.Configuration.GetSection("Auth:ValidAudiences").Get<string[]>(),
+                ValidIssuers = builder.Configuration.GetSection("Auth:ValidIssuers").Get<string[]>(),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Auth:Key"]))
+            };
+        
+            jwtOptions.MapInboundClaims = false;
+        });
         builder.Services.AddEnyimMemcached();
         builder.Services.AddOpenApi();
         builder.Services.AddSerilog();

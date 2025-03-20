@@ -23,6 +23,8 @@ public class AppDataContext : DbContext
         modelBuilder.Entity<CleanConfigurationItem>().ToTable("CleanConfigurationItems", "Core");
         modelBuilder.Entity<TodoItem>().ToTable("TodoItems", "Core");
         modelBuilder.Entity<TodoList>().ToTable("TodoLists", "Core");
+        modelBuilder.Entity<UserRole>().ToTable("UserRoles", "Core");
+        modelBuilder.Entity<UserAccount>().ToTable("UserAccounts", "Core");
         EntityPropertyMapper(modelBuilder);
     }
     private void EntityPropertyMapper(ModelBuilder modelBuilder)
