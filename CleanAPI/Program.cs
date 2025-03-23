@@ -1,5 +1,9 @@
 using Akka.Actor;
+using Akka.Actor.Setup;
 using Akka.DependencyInjection;
+using Akka.Hosting;
+using Akka.Persistence.Hosting;
+using Akka.Persistence.Sql.Hosting;
 using CleanBase;
 using CleanBase.CleanAbstractions.CleanOperation;
 using CleanBase.Validator;
@@ -9,6 +13,7 @@ using CleanOperation.DataAccess;
 using FastEndpoints;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using LinqToDB;
 using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.Batch;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -117,31 +122,35 @@ public class Program
 
         builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
-
-        builder.Services.AddSingleton(provider =>
+        builder.Services.AddAkka("clean-system", (akkaBuilder, provider) =>
         {
-            var bootstrap = BootstrapSetup.Create();
-            var di = DependencyResolverSetup.Create(provider);
-            var actorSystemSetup = bootstrap.And(di);
-            var system = ActorSystem.Create("CleanSystem", actorSystemSetup);
-            return system;
-        });
-        var assembly = typeof(ICleanActor).Assembly;
-        var types = assembly.ExportedTypes
-           // filter types that are unrelated
-           .Where(x => x.IsClass && x.IsPublic && x.GetInterface(nameof(ICleanActor)) != null);
-        foreach (var type in types)
-        {
-            builder.Services.AddSingleton(provider =>
+            akkaBuilder.WithSqlPersistence(builder.Configuration["ConnectionStrings:DefaultConnection"],
+                ProviderName.SqlServer2022)
+            .StartActors((actors, registry, resolver) =>
             {
-                var actorSystem = provider.GetRequiredService<ActorSystem>();
-                var props = DependencyResolver.For(actorSystem).Props(type);
-                return actorSystem.ActorOf(props, type.Name);
+                var regStatus = registry.TryRegister<SampleTodoListActor>(actors.ActorOf<SampleTodoListActor>());
+                Log.Information("Registry Status: " + regStatus);
             });
-        }
+
+        });
+       
+        //var assembly = typeof(ICleanActor).Assembly;
+        //var types = assembly.ExportedTypes
+        //   // filter types that are unrelated
+        //   .Where(x => x.IsClass && x.IsPublic && x.GetInterface(nameof(ICleanActor)) != null);
+        //foreach (var type in types)
+        //{
+        //    builder.Services.AddSingleton(provider =>
+        //    {
+        //        var actorSystem = provider.GetRequiredService<ActorSystem>();
+        //        var props = DependencyResolver.For(actorSystem).Props(type);
+        //        return actorSystem.ActorOf(props, type.Name);
+        //    });
+        //}
 
 
         var app = builder.Build();
+
         app.UseResponseCompression();
         app.UseEnyimMemcached();
         app.UseResponseCaching()
