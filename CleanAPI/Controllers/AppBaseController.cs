@@ -1,10 +1,11 @@
 ﻿using CleanBase;
 using CleanBase.CleanAbstractions.CleanOperation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 
 namespace CleanAPI.Controllers;
-//[Authorize]
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class AppBaseController<TEntity> : ControllerBase where TEntity : class, IEntityRoot

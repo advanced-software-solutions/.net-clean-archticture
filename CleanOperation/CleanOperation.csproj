@@ -9,8 +9,11 @@
   <ItemGroup>
     <PackageReference Include="Akka" Version="1.5.39" />
     <PackageReference Include="Akka.DependencyInjection" Version="1.5.39" />
+    <PackageReference Include="Akka.Hosting" Version="1.5.39" />
     <PackageReference Include="Akka.Logger.Serilog" Version="1.5.25" />
     <PackageReference Include="Akka.Persistence" Version="1.5.39" />
+    <PackageReference Include="Akka.Persistence.Sql" Version="1.5.38.1" />
+    <PackageReference Include="Akka.Persistence.Sql.Hosting" Version="1.5.38.1" />
     <PackageReference Include="Akka.Persistence.SqlServer" Version="1.5.37" />
     <PackageReference Include="Ardalis.GuardClauses" Version="5.0.0" />
     <PackageReference Include="Dapper" Version="2.1.66" />

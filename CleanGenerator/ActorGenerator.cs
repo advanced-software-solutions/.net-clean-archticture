@@ -25,7 +25,7 @@ public class ActorGenerator : IIncrementalGenerator
         {
 
             var sourceText = $$"""
-
+            /*
             using Akka.Actor;
             using CleanBase.CleanAbstractions.CleanOperation;
             using CleanBase.Dtos;
@@ -114,7 +114,7 @@ public class ActorGenerator : IIncrementalGenerator
                 }
 
             }
-            
+            */
             """;
 
             spc.AddSource($"{source.Name}Actor.g.cs", SourceText.From(sourceText, Encoding.UTF8));

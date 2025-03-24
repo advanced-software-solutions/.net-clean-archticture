@@ -1,5 +1,9 @@
 using Akka.Actor;
+using Akka.Actor.Setup;
 using Akka.DependencyInjection;
+using Akka.Hosting;
+using Akka.Persistence.Hosting;
+using Akka.Persistence.Sql.Hosting;
 using CleanBase;
 using CleanBase.CleanAbstractions.CleanOperation;
 using CleanBase.Entities;
@@ -10,12 +14,13 @@ using CleanOperation.DataAccess;
 using FastEndpoints;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using LinqToDB;
 using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.Batch;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.Extensions.ObjectPool;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using RepoDb;
@@ -23,6 +28,7 @@ using Scalar.AspNetCore;
 using Serilog;
 using System.IO.Compression;
 using System.Reflection;
+using System.Text;
 using System.Text.Json.Serialization;
 
 namespace CleanAPI;
@@ -36,7 +42,25 @@ public class Program
 .CreateLogger();
 
         var builder = WebApplication.CreateBuilder(args);
-        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+        builder.Services.AddAuthentication()
+        .AddJwtBearer(jwtOptions =>
+        {
+            jwtOptions.RequireHttpsMetadata = false;
+            jwtOptions.Authority = builder.Configuration["Auth:Authority"];
+            jwtOptions.Audience = builder.Configuration["Auth:Audience"];
+            jwtOptions.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateIssuerSigningKey = true,
+                ValidateLifetime = true,
+                ValidAudiences = builder.Configuration.GetSection("Auth:ValidAudiences").Get<string[]>(),
+                ValidIssuers = builder.Configuration.GetSection("Auth:ValidIssuers").Get<string[]>(),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Auth:Key"]))
+            };
+        
+            jwtOptions.MapInboundClaims = false;
+        });
         builder.Services.AddEnyimMemcached();
         builder.Services.AddOpenApi();
         builder.Services.AddSerilog();
@@ -99,31 +123,35 @@ public class Program
 
         builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
-
-        builder.Services.AddSingleton(provider =>
+        builder.Services.AddAkka("clean-system", (akkaBuilder, provider) =>
         {
-            var bootstrap = BootstrapSetup.Create();
-            var di = DependencyResolverSetup.Create(provider);
-            var actorSystemSetup = bootstrap.And(di);
-            var system = ActorSystem.Create("CleanSystem", actorSystemSetup);
-            return system;
-        });
-        var assembly = typeof(ICleanActor).Assembly;
-        var types = assembly.ExportedTypes
-           // filter types that are unrelated
-           .Where(x => x.IsClass && x.IsPublic && x.GetInterface(nameof(ICleanActor)) != null);
-        foreach (var type in types)
-        {
-            builder.Services.AddSingleton(provider =>
+            akkaBuilder.WithSqlPersistence(builder.Configuration["ConnectionStrings:DefaultConnection"],
+                ProviderName.SqlServer2022)
+            .StartActors((actors, registry, resolver) =>
             {
-                var actorSystem = provider.GetRequiredService<ActorSystem>();
-                var props = DependencyResolver.For(actorSystem).Props(type);
-                return actorSystem.ActorOf(props, type.Name);
+                var regStatus = registry.TryRegister<SampleTodoListActor>(actors.ActorOf<SampleTodoListActor>());
+                Log.Information("Registry Status: " + regStatus);
             });
-        }
+
+        });
+       
+        //var assembly = typeof(ICleanActor).Assembly;
+        //var types = assembly.ExportedTypes
+        //   // filter types that are unrelated
+        //   .Where(x => x.IsClass && x.IsPublic && x.GetInterface(nameof(ICleanActor)) != null);
+        //foreach (var type in types)
+        //{
+        //    builder.Services.AddSingleton(provider =>
+        //    {
+        //        var actorSystem = provider.GetRequiredService<ActorSystem>();
+        //        var props = DependencyResolver.For(actorSystem).Props(type);
+        //        return actorSystem.ActorOf(props, type.Name);
+        //    });
+        //}
 
 
         var app = builder.Build();
+
         app.UseResponseCompression();
         app.UseEnyimMemcached();
         app.UseResponseCaching()

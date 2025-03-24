@@ -7,26 +7,26 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CleanBusiness.Actors;
 
-public class SampleTodoListActor : UntypedPersistentActor
-{
+    public class SampleTodoListActor : UntypedPersistentActor
+    {
     private readonly IServiceProvider _sp;
     private readonly IServiceScope _scope;
     private readonly IRepository<TodoList> _repository;
     public SampleTodoListActor(IServiceProvider sp)
-    {
+        {
         _scope = sp.CreateScope();
         _sp = sp;
         _repository =  _scope.ServiceProvider.GetRequiredService<IRepository<TodoList>>();
-    }
+        }
 
     public override string PersistenceId { get; }
-    protected override void OnCommand(object message)
-    {
-        if (message is EntityCommand<TodoList, Guid>)
+        protected override void OnCommand(object message)
         {
-            var action = message as EntityCommand<TodoList, Guid>;
-            try
+            if (message is EntityCommand<TodoList, Guid>)
             {
+                var action = message as EntityCommand<TodoList, Guid>;
+            try
+                {
                 Persist(action, evt =>
                 {
                     switch (action.Action)
@@ -55,11 +55,11 @@ public class SampleTodoListActor : UntypedPersistentActor
                 
             }
             
+            }
         }
-    }
 
-    protected override void OnRecover(object message)
-    {
+        protected override void OnRecover(object message)
+        {
         throw new NotImplementedException();
     }
 }
