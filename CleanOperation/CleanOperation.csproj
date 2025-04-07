@@ -7,16 +7,33 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka" Version="1.5.38" />
+    <PackageReference Include="Akka" Version="1.5.39" />
+    <PackageReference Include="Akka.DependencyInjection" Version="1.5.39" />
+    <PackageReference Include="Akka.Hosting" Version="1.5.39" />
+    <PackageReference Include="Akka.Logger.Serilog" Version="1.5.25" />
+    <PackageReference Include="Akka.Persistence" Version="1.5.39" />
+    <PackageReference Include="Akka.Persistence.Sql" Version="1.5.38.1" />
+    <PackageReference Include="Akka.Persistence.Sql.Hosting" Version="1.5.38.1" />
+    <PackageReference Include="Akka.Persistence.SqlServer" Version="1.5.37" />
     <PackageReference Include="Ardalis.GuardClauses" Version="5.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.2" />
-    <PackageReference Include="Z.EntityFramework.Plus.EFCore" Version="9.103.7.1" />
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
+    <PackageReference Include="Dapper.Rainbow" Version="2.1.66" />
+    <PackageReference Include="EnyimMemcachedCore" Version="3.3.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="9.3.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.3" />
+    <PackageReference Include="RepoDb.SqlServer" Version="1.13.1" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\CleanBase\CleanBase.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Abstractions\" />
   </ItemGroup>
 
 </Project>

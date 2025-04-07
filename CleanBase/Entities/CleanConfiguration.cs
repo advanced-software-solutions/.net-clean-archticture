@@ -1,8 +1,9 @@
-﻿namespace CleanBase.Entities
+﻿using System.Text.Json.Serialization;
+
+namespace CleanBase.Entities;
+
+public partial class CleanConfiguration : EntityRoot
 {
-    public class CleanConfiguration : EntityRoot
-    {
-        public string Name { get; set; }
-        public List<CleanConfigurationItem>? ConfigurationItems { get; set; }
-    }
+    public string Name { get; set; }
+    public List<CleanConfigurationItem>? ConfigurationItems { get; set; }
 }

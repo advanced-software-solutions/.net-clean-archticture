@@ -1,132 +1,193 @@
 using Akka.Actor;
+using Akka.Actor.Setup;
+using Akka.DependencyInjection;
+using Akka.Hosting;
+using Akka.Persistence.Hosting;
+using Akka.Persistence.Sql.Hosting;
 using CleanBase;
-using CleanBase.CleanAbstractions.CleanBusiness;
 using CleanBase.CleanAbstractions.CleanOperation;
 using CleanBase.Entities;
 using CleanBase.Validator;
-using CleanBusiness;
+using CleanBusiness.Actors;
 using CleanOperation.ConfigProvider;
 using CleanOperation.DataAccess;
+using FastEndpoints;
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using MicroElements.Swashbuckle.FluentValidation.AspNetCore;
-using Microsoft.AspNetCore.Builder;
+using LinqToDB;
 using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.Batch;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
+using RepoDb;
 using Scalar.AspNetCore;
 using Serilog;
+using System.IO.Compression;
 using System.Reflection;
+using System.Text;
 using System.Text.Json.Serialization;
 
-namespace CleanAPI
+namespace CleanAPI;
+
+public class Program
 {
-    public class Program
+    public static void Main(string[] args)
     {
-        public static void Main(string[] args)
-        {
-            Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .CreateLogger();
+        Log.Logger = new LoggerConfiguration()
+.WriteTo.Console()
+.CreateLogger();
 
-            var builder = WebApplication.CreateBuilder(args);
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
-            builder.Services.AddSerilog();
-            // Add services to the container.
-            builder.Services.AddDbContext<AppDataContext>(y =>
+        var builder = WebApplication.CreateBuilder(args);
+        builder.Services.AddAuthentication()
+        .AddJwtBearer(jwtOptions =>
+        {
+            jwtOptions.RequireHttpsMetadata = false;
+            jwtOptions.Authority = builder.Configuration["Auth:Authority"];
+            jwtOptions.Audience = builder.Configuration["Auth:Audience"];
+            jwtOptions.TokenValidationParameters = new TokenValidationParameters
             {
-                var dbConnection = builder.Configuration["ConnectionStrings:DefaultConnection"]; 
-                y.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]);
-                //y.UseInMemoryDatabase("Main");
-                y.EnableDetailedErrors();
-                y.EnableSensitiveDataLogging();
-                y.ConfigureWarnings(y => y.Ignore(InMemoryEventId.TransactionIgnoredWarning));
-            });
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateIssuerSigningKey = true,
+                ValidateLifetime = true,
+                ValidAudiences = builder.Configuration.GetSection("Auth:ValidAudiences").Get<string[]>(),
+                ValidIssuers = builder.Configuration.GetSection("Auth:ValidIssuers").Get<string[]>(),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Auth:Key"]))
+            };
+        
+            jwtOptions.MapInboundClaims = false;
+        });
+        builder.Services.AddEnyimMemcached();
+        builder.Services.AddOpenApi();
+        builder.Services.AddSerilog();
+        builder.Services.AddFastEndpoints().AddResponseCaching();
+        builder.Services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+        });
+
+        builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+        {
+            options.Level = CompressionLevel.Fastest;
+        });
+
+        builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+        {
+            options.Level = CompressionLevel.SmallestSize;
+        });
+        builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+        // Add services to the container.
+        builder.Services.AddDbContext<AppDataContext>(y =>
+        {
+            var dbConnection = builder.Configuration["ConnectionStrings:DefaultConnection"];
+            y.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"],
+                o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+            //y.UseInMemoryDatabase("Main");
+            y.EnableDetailedErrors();
+            y.EnableSensitiveDataLogging();
+            y.ConfigureWarnings(y => y.Ignore(InMemoryEventId.TransactionIgnoredWarning));
+            y.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+        });
+        GlobalConfiguration
+    .Setup()
+    .UseSqlServer();
 #pragma warning disable ASP0013 // Suggest switching from using Configure methods to WebApplicationBuilder.Configuration
-            builder.Host.ConfigureAppConfiguration((hostingContext, configBuilder) =>
-            {
-                var config = configBuilder.Build();
-                var configSource = new CustomCleanConfigurationSource(opts =>
-                    opts.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]));
-                configBuilder.Add(configSource);
-            });
-#pragma warning restore ASP0013 // Suggest switching from using Configure methods to WebApplicationBuilder.Configuration
-            var defaultBatchHandler = new DefaultODataBatchHandler();
-            defaultBatchHandler.MessageQuotas.MaxNestingDepth = 3;
-            defaultBatchHandler.MessageQuotas.MaxOperationsPerChangeset = 10;
-            defaultBatchHandler.MessageQuotas.MaxReceivedMessageSize = 1000;
-            builder.Services.AddFluentValidationClientsideAdapters();
-            builder.Services.AddValidatorsFromAssemblyContaining<TodoListValidation>(); ;
-            builder.Services.AddControllers()
-                .AddJsonOptions(x =>
-                x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles)
-            .AddOData(opt => opt.Select().Filter().Expand().Count().SetMaxTop(10).EnableQueryFeatures()
-            .AddRouteComponents("odata", GetEdmModel(), defaultBatchHandler));
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-            builder.Services.AddFluentValidationRulesToSwagger();
-
-            builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-            var assembly = typeof(EntityRoot).Assembly; // I actually use Assembly.LoadFile with well-known names 
-            var types = assembly.ExportedTypes
-               // filter types that are unrelated
-               .Where(x => x.IsClass && x.IsPublic && x.BaseType == typeof(CleanBase.EntityRoot));
-
-            foreach (var type in types)
-            {
-                // assume that we want to inject any class that implements an interface
-                // whose name is the type's name prefixed with I
-                var serviceName = type.Name + "Service";
-                var businessAssembly = typeof(RootService<>).Assembly;
-                var service = businessAssembly.ExportedTypes.FirstOrDefault(y => y.Name == serviceName);
-                if (service != null)
-                {
-                    builder.Services.AddScoped(businessAssembly.ExportedTypes.FirstOrDefault(y => y.Name == $"I{type.Name}Service") , service);
-                }
-            }
-            //builder.Services.AddScoped<ITodoListService, TodoListService>();
-            var actorSystem = ActorSystem.Create("CleanSystem");
-            // Register Akka.NET services
-            builder.Services.AddSingleton(actorSystem);
-            var app = builder.Build();
-            app.UseSerilogRequestLogging();
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.MapOpenApi();
-                app.MapScalarApiReference();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-            
-            app.MapControllers();
-
-            app.Run();
-        }
-        private static IEdmModel GetEdmModel()
+        builder.Host.ConfigureAppConfiguration((hostingContext, configBuilder) =>
         {
-            var assembly = typeof(EntityRoot).Assembly; // I actually use Assembly.LoadFile with well-known names 
-            var types = assembly.ExportedTypes
-               // filter types that are unrelated
-               .Where(x => x.IsClass && x.IsPublic && x.BaseType == typeof(CleanBase.EntityRoot));
-            ODataConventionModelBuilder builder = new ODataConventionModelBuilder();
-
-            foreach (var type in types)
+            var config = configBuilder.Build();
+            var configSource = new CustomCleanConfigurationSource(opts =>
+                opts.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]));
+            configBuilder.Add(configSource);
+        });
+#pragma warning restore ASP0013 // Suggest switching from using Configure methods to WebApplicationBuilder.Configuration
+        var defaultBatchHandler = new DefaultODataBatchHandler();
+        defaultBatchHandler.MessageQuotas.MaxNestingDepth = 3;
+        defaultBatchHandler.MessageQuotas.MaxOperationsPerChangeset = 10;
+        defaultBatchHandler.MessageQuotas.MaxReceivedMessageSize = 1000;
+        builder.Services.AddFluentValidationClientsideAdapters();
+        builder.Services.AddValidatorsFromAssemblyContaining<TodoListValidation>(); ;
+        builder.Services.AddControllers()
+            .AddJsonOptions(x =>
             {
-                var entityType = builder.AddEntityType(type);
-                PropertyInfo key = new EntityRoot().GetType().GetProperty("Id");
-                entityType.HasKey(key);
-                builder.AddEntitySet(type.Name, entityType);
-            }
-            return builder.GetEdmModel();
+                x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                x.JsonSerializerOptions.TypeInfoResolverChain.Add(AppJsonSerializerContext.Default);
+            })
+        .AddOData(opt => opt.Select().Filter().Expand().Count().SetMaxTop(10).EnableQueryFeatures()
+        .AddRouteComponents("odata", GetEdmModel(), defaultBatchHandler));
+
+        builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
+        builder.Services.AddAkka("clean-system", (akkaBuilder, provider) =>
+        {
+            akkaBuilder.WithSqlPersistence(builder.Configuration["ConnectionStrings:DefaultConnection"],
+                ProviderName.SqlServer2022)
+            .StartActors((actors, registry, resolver) =>
+            {
+                var regStatus = registry.TryRegister<SampleTodoListActor>(actors.ActorOf<SampleTodoListActor>());
+                Log.Information("Registry Status: " + regStatus);
+            });
+
+        });
+       
+        //var assembly = typeof(ICleanActor).Assembly;
+        //var types = assembly.ExportedTypes
+        //   // filter types that are unrelated
+        //   .Where(x => x.IsClass && x.IsPublic && x.GetInterface(nameof(ICleanActor)) != null);
+        //foreach (var type in types)
+        //{
+        //    builder.Services.AddSingleton(provider =>
+        //    {
+        //        var actorSystem = provider.GetRequiredService<ActorSystem>();
+        //        var props = DependencyResolver.For(actorSystem).Props(type);
+        //        return actorSystem.ActorOf(props, type.Name);
+        //    });
+        //}
+
+
+        var app = builder.Build();
+
+        app.UseResponseCompression();
+        app.UseEnyimMemcached();
+        app.UseResponseCaching()
+            .UseFastEndpoints(y => y.Serializer.Options.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+        // Configure the HTTP request pipeline.
+        if (app.Environment.IsDevelopment())
+        {
+            app.MapOpenApi();
+            app.MapScalarApiReference();
+            app.UseSerilogRequestLogging();
         }
+
+        app.UseHttpsRedirection();
+
+        app.UseAuthorization();
+
+
+        app.MapControllers();
+
+        app.Run();
+    }
+    private static IEdmModel GetEdmModel()
+    {
+        var assembly = typeof(EntityRoot).Assembly;
+        var types = assembly.ExportedTypes
+           // filter types that are unrelated
+           .Where(x => x.IsClass && x.IsPublic && x.BaseType == typeof(CleanBase.EntityRoot));
+        ODataConventionModelBuilder builder = new ODataConventionModelBuilder();
+
+        foreach (var type in types)
+        {
+            var entityType = builder.AddEntityType(type);
+            PropertyInfo key = new EntityRoot().GetType().GetProperty("Id");
+            entityType.HasKey(key);
+            builder.AddEntitySet(type.Name, entityType);
+        }
+        return builder.GetEdmModel();
     }
 }

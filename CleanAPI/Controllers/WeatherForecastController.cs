@@ -1,12 +1,12 @@
+using Akka.Actor;
+using CleanBase.CleanAbstractions.CleanOperation;
+using CleanBase.Dtos;
 using CleanBase;
-using CleanBase.CleanAbstractions.CleanBusiness;
 using CleanBase.Entities;
-using CleanBusiness;
+using Enyim.Caching;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using System.Diagnostics;
-using System.Reflection;
+using System.Threading.Tasks;
+using CleanBusiness.Actors;
 
 namespace CleanAPI.Controllers
 {
@@ -15,9 +15,11 @@ namespace CleanAPI.Controllers
     public class WeatherForecastController : ControllerBase
     {
         IConfiguration _configuration;
-        public WeatherForecastController(IConfiguration configuration)
+        IUntypedActorContext _actorRef;
+        public WeatherForecastController(IConfiguration configuration, IUntypedActorContext actorRef)
         {
             _configuration = configuration;
+            _actorRef = actorRef;
         }
         private static readonly string[] Summaries = new[]
         {
@@ -25,52 +27,28 @@ namespace CleanAPI.Controllers
     };
 
         private readonly ILogger<WeatherForecastController> _logger;
-        
+
 
 
         [HttpGet(Name = "GetWeatherForecast")]
-        public IEnumerable<WeatherForecast> Get()
+        public async Task<IActionResult> Get()
         {
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            })
-            .ToArray();
+            var result = await _actorRef.ActorOf<SampleTodoListActor>().Ask<EntityCommand<TodoList, Guid>>(new EntityCommand<TodoList, Guid> { });
+            TodoList item = new TodoList();
+            item.Title = "test";
+            item.DueDate = DateTime.Now;
+            return Ok(result);
         }
         [HttpGet("Config")]
         public IActionResult Config()
         {
+
             var data = _configuration["App:Title"];
             return Ok(data);
         }
 
-        [HttpGet("[action]")]
-        public IActionResult TestGenerator()
-        {
-            Compilation inputCompilation = CreateCompilation(@"
-        namespace MyCode
-        {
-            public class Program
-            {
-                public static void Main(string[] args)
-                {
-                }
-            }
-        }
-        ");
-            ServiceGenerator serviceGenerator = new ServiceGenerator();
-            GeneratorDriver driver = CSharpGeneratorDriver.Create(serviceGenerator);
-            driver = driver.RunGeneratorsAndUpdateCompilation(inputCompilation, out var outputCompilation, out var diagnostics);
-            return Ok("test");
-        }
 
-        private static Compilation CreateCompilation(string source)
-           => CSharpCompilation.Create("compilation",
-               new[] { CSharpSyntaxTree.ParseText(source) },
-               new[] { MetadataReference.CreateFromFile(typeof(RootService<>).GetTypeInfo().Assembly.Location),
-                       MetadataReference.CreateFromFile(typeof(EntityRoot).GetTypeInfo().Assembly.Location)},
-               new CSharpCompilationOptions(OutputKind.ConsoleApplication));
+
+
     }
 }

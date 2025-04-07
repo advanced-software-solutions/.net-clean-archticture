@@ -1,13 +1,21 @@
-﻿namespace CleanBase.Dtos
+﻿namespace CleanBase.Dtos;
+
+public class EntityCommand<TEntity,TId>
 {
-    public class EntityCommand<T>
-    {
-        public ActionType Action { get; set; }
-        public T Entity { get; set; }
-    }
+    public ActionType Action { get; set; }
+    public TEntity? Entity { get; set; }
+    public List<TEntity>? Entities { get; set; }
+    public TId? Id { get; set; }
+    public Dictionary<string,object>? Extra { get; set; }
+}
 
-    public enum ActionType
-    {
-
-    }
+public enum ActionType
+{
+    Insert,
+    InsertList,
+    Update,
+    Delete,
+    GetById,
+    GetPaginated,
+    GetByIdCache
 }
