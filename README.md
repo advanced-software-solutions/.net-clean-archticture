@@ -200,6 +200,6 @@ The nice thing about 2.x release is that you no longer need to create a separate
 
 Notice that the URL route will be the name of the entity. For example: 'api/TodoList' with using the right Http Request Type (GET, POST, PUT, DELETE).
 
-### 88. OData
+### 8. OData
 To easy the query of entities, we can use OData to query the data as we like. For example, if we want to query the TodoList where it is past due we just send the following URL: 'api/TodoList?$filter=DueDate gt 2023-06-10 ' and we shall get our results.
 You can get more information about [OData from their official website](https://www.odata.org/).
