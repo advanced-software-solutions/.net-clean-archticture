@@ -23,10 +23,9 @@ This project was created by [Advanced Software Solution](https://advancedsoftwar
 	 3. Operation
 	 4. Mapping
 	 5. Repository
-	 6. Service
-	 7. Injection for Operation and Services
-	 8. API Controllers
-	 9. OData
+	 6. Actors
+	 7. API Controllers
+	 8. OData
 4. Deployment
 	1. Local IIS
 	2. Azure
@@ -188,103 +187,19 @@ For you to understand how the repository class works, let's examin a method that
                 }
             }
         }
-Just before we jump on, please note that since we are already using OData in most of the time we will lower the amount of typical code, also the other common operations are already implemented such as insert, insert bulk.
+Just before we jump on, please note that since we are already using OData in most of the time, we will lower the amount of typical code. Also, the other common operations are already implemented such as insert, insert bulk.
 
-### 6. Service
-Here begins the actual work for our business implementation. Here we define our logic and how the actions must be done. Remember that we prefer to inject repository rather than other services. If we need to implement another service logic we can use MediateR to call the other service rather than injecting it. This way we have a much cleaner code and no issue with circuluer dependency.
+### 6. Actors
+Here begins the actual work for our business implementation. Here, we define our logic and how the actions must be done. Remember that we prefer to inject the repository rather than other actors; the repository will handle all the data insertion. This way, we have a much cleaner code and no issue with circular dependency. Note that with the Version 2.x, there is no need to create an actor unless you need to implement a more custom logic rather than simple CRUD.  
 
-To implement a service we need first to place it on th eCleanBase project Abstraction where it will inherit the IRootService interface so we can have the luxury of the common methods. The service takes a generic entity type so it can define the default repository.
+Note that this section is pending, but still, you can create an untyped actor or whatever actor you like and inject it in the system.
 
-Let's take a look at the TodoService
 
-    namespace CleanBase.CleanAbstractions.CleanBusiness
-    {
-        public interface ITodoListService : IRootService<TodoList>
-        {
-        }
-    }
-Notice that it inherits the IRootService and it takes the Entity type. Also, here you can define your extra service methods.
+### 7. API Controller
+The nice thing about 2.x release is that you no longer need to create a separate controller for each entity; the CleanAPIGenerator will create the controller for you with different flavours. For the basic read, you will have the regular OData ready for you. For the update, delete, and insert, we will also generate more methods for you using FastEndpoints, so the process is much faster and has better performance.
 
-Now in the CleanBusiness layer we implement the service interface,and we need to inherit the RootService class where we have the implementation for the IRootService methods.
+Notice that the URL route will be the name of the entity. For example: 'api/TodoList' with using the right Http Request Type (GET, POST, PUT, DELETE).
 
-The RootService is intended to give us an easy access to the repository along with more enhancements that we shall later on add them. 
-
-Remember as we are using OData for this project, we rarely need to add read methods as using OData will give us an easy access to build our queries in a dynamic way.
-
-### 7. Injection
-We will need to inject any service or operation into the Program.cs so we can later on use it through the operation. 
-
-### 8. API Controller
-We usually define the Controller with the same name of the Entity and end it with Controller. And we need to inherit the BaseController where we pass the entity so we can have access to the common methods we have avaliable in the BaseService.
-
-Also, we have the access to the OData as well were we send the query via the URL so we can get the results of any query without need to hardcode them. Let's look at the TodoListController:
-
-    using CleanBase.CleanAbstractions.CleanBusiness;
-    using CleanBase.Entities;
-    
-    namespace CleanAPI.Controllers
-    {
-        public class TodoListController : BaseController<TodoList>
-        {
-            public TodoListController(ITodoListService todoListService):base(todoListService)
-            {
-                
-            }
-        }
-    }
-
-The Base Controller has the following methods:
-
-    using CleanBase;
-    using CleanBase.CleanAbstractions.CleanBusiness;
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.AspNetCore.OData.Query;
-    
-    namespace CleanAPI.Controllers
-    {
-        [ApiController]
-        [Route("[controller]")]
-        public class BaseController<T> : ControllerBase where T : class, IEntityRoot
-        {
-            private readonly IRootService<T> _service;
-            public BaseController(IRootService<T> service)
-            {
-                _service = service;
-            }
-            [HttpGet]
-            [EnableQuery]
-            public IActionResult Get()
-            {
-                return Ok(_service.Query());
-            }
-            [HttpPost]
-            public async Task<IActionResult> Post([FromBody] T entity)
-            {
-                var result = await _service.InsertAsync(entity);
-                return Ok(result);
-            }
-            [HttpPost("[action]")]
-            public async Task<IActionResult> InsertList([FromBody] List<T> entity)
-            {
-                await _service.InsertAsync(entity);
-                return Ok(entity);
-            }
-            [HttpPut]
-            public IActionResult Put([FromBody] T entity)
-            {
-                var result = _service.Update(entity);
-                return Ok(result.Entity);
-            }
-            [HttpDelete]
-            public IActionResult Delete(int id)
-            {
-                _service.Delete(id);
-                return Ok();
-            }
-        }
-    }
-
-Notice that the URL route will be as the name of the entity. For example: 'api/TodoList' with using the right Http Request Type (GET, POST, PUT, DELETE).
-### 9. OData
+### 88. OData
 To easy the query of entities, we can use OData to query the data as we like. For example, if we want to query the TodoList where it is past due we just send the following URL: 'api/TodoList?$filter=DueDate gt 2023-06-10 ' and we shall get our results.
 You can get more information about [OData from their official website](https://www.odata.org/).
