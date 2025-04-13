@@ -14,6 +14,13 @@ public class CleanAppConfiguration
     public const string Name = "CleanAppConfiguration";
     public InMemoryCaching InMemoryCaching { get; set; }
     public Auth Auth { get; set; }
+    public Datastore Datastore { get; set; }
+}
+
+public class Datastore
+{
+    public string ConnectionString { get; set; }
+    public string Provider { get; set; }
 }
 
 public class Configs

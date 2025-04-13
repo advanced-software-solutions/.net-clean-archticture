@@ -29,6 +29,7 @@ using System.IO.Compression;
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
+using CleanAPI.Extensions;
 using CleanBase.Configurations;
 using CleanOperation;
 
@@ -43,35 +44,34 @@ public class Program
 .CreateLogger();
 
         var builder = WebApplication.CreateBuilder(args);
-        builder.Services.Configure<CleanAppConfiguration>(
-            builder.Configuration.GetSection(CleanAppConfiguration.Name));
-        var appConfigs= builder.Configuration.Get<CleanAppConfiguration>();
-        if (true)
+        CleanAppConfiguration appConfig = new();
+        builder.Configuration.GetSection("CleanAppConfiguration").Bind(appConfig);
+        if (appConfig is null)
         {
-            
+            throw new ArgumentNullException(
+                "Configurations are missing. Please check your appsettings.json configuration.");
         }
         builder.Services.AddAuthentication()
         .AddJwtBearer(jwtOptions =>
         {
-            
             jwtOptions.RequireHttpsMetadata = false;
-            
-            jwtOptions.Authority = appConfigs.Auth.Authority;
-            jwtOptions.Audience = appConfigs.Auth.Audience;
+            jwtOptions.Authority = appConfig.Auth.Authority;
+            jwtOptions.Audience = appConfig.Auth.Audience;
             jwtOptions.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
                 ValidateAudience = true,
                 ValidateIssuerSigningKey = true,
                 ValidateLifetime = true,
-                ValidAudiences = appConfigs.Auth.ValidAudiences,
-                ValidIssuers = appConfigs.Auth.ValidIssuers,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appConfigs.Auth.Key))
+                ValidAudiences = appConfig.Auth.ValidAudiences,
+                ValidIssuers = appConfig.Auth.ValidIssuers,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appConfig.Auth.Key))
             };
         
             jwtOptions.MapInboundClaims = false;
         });
-        //builder.Services.AddEnyimMemcached();
+        
+        builder.AddInMemoryCache(appConfig);
         builder.Services.AddOpenApi();
         builder.Services.AddSerilog();
         builder.Services.AddFastEndpoints().AddResponseCaching();
@@ -93,28 +93,8 @@ public class Program
         });
         builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         // Add services to the container.
-        builder.Services.AddDbContext<AppDataContext>(y =>
-        {
-            // y.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"],
-            //     o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
-            y.UseInMemoryDatabase("Main");
-            y.EnableDetailedErrors();
-            y.EnableSensitiveDataLogging();
-            y.ConfigureWarnings(y => y.Ignore(InMemoryEventId.TransactionIgnoredWarning));
-            y.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
-        });
-        GlobalConfiguration
-    .Setup()
-    .UseSqlServer();
-#pragma warning disable ASP0013 // Suggest switching from using Configure methods to WebApplicationBuilder.Configuration
-        builder.Host.ConfigureAppConfiguration((hostingContext, configBuilder) =>
-        {
-            var config = configBuilder.Build();
-            var configSource = new CustomCleanConfigurationSource(opts =>
-                opts.UseInMemoryDatabase("Main"));
-            configBuilder.Add(configSource);
-        });
-#pragma warning restore ASP0013 // Suggest switching from using Configure methods to WebApplicationBuilder.Configuration
+        builder.AddDatastoreConnection(appConfig);
+
         var defaultBatchHandler = new DefaultODataBatchHandler();
         defaultBatchHandler.MessageQuotas.MaxNestingDepth = 3;
         defaultBatchHandler.MessageQuotas.MaxOperationsPerChangeset = 10;
@@ -148,6 +128,7 @@ public class Program
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
+            app.Services.UpdateDatabase();
             app.MapOpenApi();
             app.MapScalarApiReference();
             app.UseSerilogRequestLogging();
