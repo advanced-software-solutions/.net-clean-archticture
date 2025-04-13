@@ -1,8 +1,8 @@
 ﻿using Akka.Actor;
 using Akka.Persistence;
-using CleanBase.CleanAbstractions.CleanOperation;
 using CleanBase.Dtos;
 using CleanBase.Entities;
+using CleanOperation;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CleanBusiness.Actors;

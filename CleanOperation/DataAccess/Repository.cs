@@ -1,6 +1,5 @@
 ﻿using Ardalis.GuardClauses;
 using CleanBase;
-using CleanBase.CleanAbstractions.CleanOperation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Query;

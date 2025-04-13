@@ -1,5 +1,5 @@
 ﻿using CleanBase;
-using CleanBase.CleanAbstractions.CleanOperation;
+using CleanOperation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;

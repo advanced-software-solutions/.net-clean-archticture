@@ -31,7 +31,7 @@ public class ControllerGenerator : IIncrementalGenerator
         using CleanBase.Entities;
         using CleanBase.Dtos;
         using Enyim.Caching;
-        using CleanBase.CleanAbstractions.CleanOperation;
+        using CleanOperation;
         using CleanBase;
 
         namespace CleanAPI.Controllers;
@@ -83,7 +83,7 @@ public class ControllerGenerator : IIncrementalGenerator
                 public class {{source.Name}}GetById : FastEndpoints.EndpointWithoutRequest<{{source.Name}}>
                 {
                     public IRepository<{{source.Name}}> _repository { get; set; }
-                    public IMemcachedClient _factory { get; set; }
+                    //public IMemcachedClient _factory { get; set; }
                     public override void Configure()
                     {
                         Get("/api/{{source.Name}}/{id}");
@@ -97,14 +97,14 @@ public class ControllerGenerator : IIncrementalGenerator
                     public override async Task HandleAsync(CancellationToken ct)
                     {
                         var req = Route<Guid>("id");
-                        var exists = await _factory.GetAsync<EntityResult<{{source.Name}}>>("{{source.Name}}:id:" + req);
+                        /*var exists = await _factory.GetAsync<EntityResult<{{source.Name}}>>("{{source.Name}}:id:" + req);
                         if (exists.HasValue)
                         {
                             await SendAsync((await _factory.GetAsync<{{source.Name}}>("{{source.Name}}:id:" + req)).Value);
                             return;
-                        }
+                        }*/
                         var result = await _repository.GetAsync(req);
-                        await _factory.SetAsync("{{source.Name}}:id:" + req, result, TimeSpan.FromSeconds(30));
+                        //await _factory.SetAsync("{{source.Name}}:id:" + req, result, TimeSpan.FromSeconds(30));
                         await SendAsync(result);
                     }
                 }

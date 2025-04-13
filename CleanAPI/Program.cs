@@ -5,7 +5,6 @@ using Akka.Hosting;
 using Akka.Persistence.Hosting;
 using Akka.Persistence.Sql.Hosting;
 using CleanBase;
-using CleanBase.CleanAbstractions.CleanOperation;
 using CleanBase.Entities;
 using CleanBase.Validator;
 using CleanBusiness.Actors;
@@ -30,6 +29,8 @@ using System.IO.Compression;
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
+using CleanBase.Configurations;
+using CleanOperation;
 
 namespace CleanAPI;
 
@@ -42,26 +43,35 @@ public class Program
 .CreateLogger();
 
         var builder = WebApplication.CreateBuilder(args);
+        builder.Services.Configure<CleanAppConfiguration>(
+            builder.Configuration.GetSection(CleanAppConfiguration.Name));
+        var appConfigs= builder.Configuration.Get<CleanAppConfiguration>();
+        if (true)
+        {
+            
+        }
         builder.Services.AddAuthentication()
         .AddJwtBearer(jwtOptions =>
         {
+            
             jwtOptions.RequireHttpsMetadata = false;
-            jwtOptions.Authority = builder.Configuration["Auth:Authority"];
-            jwtOptions.Audience = builder.Configuration["Auth:Audience"];
+            
+            jwtOptions.Authority = appConfigs.Auth.Authority;
+            jwtOptions.Audience = appConfigs.Auth.Audience;
             jwtOptions.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
                 ValidateAudience = true,
                 ValidateIssuerSigningKey = true,
                 ValidateLifetime = true,
-                ValidAudiences = builder.Configuration.GetSection("Auth:ValidAudiences").Get<string[]>(),
-                ValidIssuers = builder.Configuration.GetSection("Auth:ValidIssuers").Get<string[]>(),
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Auth:Key"]))
+                ValidAudiences = appConfigs.Auth.ValidAudiences,
+                ValidIssuers = appConfigs.Auth.ValidIssuers,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appConfigs.Auth.Key))
             };
         
             jwtOptions.MapInboundClaims = false;
         });
-        builder.Services.AddEnyimMemcached();
+        //builder.Services.AddEnyimMemcached();
         builder.Services.AddOpenApi();
         builder.Services.AddSerilog();
         builder.Services.AddFastEndpoints().AddResponseCaching();
@@ -85,10 +95,9 @@ public class Program
         // Add services to the container.
         builder.Services.AddDbContext<AppDataContext>(y =>
         {
-            var dbConnection = builder.Configuration["ConnectionStrings:DefaultConnection"];
-            y.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"],
-                o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
-            //y.UseInMemoryDatabase("Main");
+            // y.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"],
+            //     o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+            y.UseInMemoryDatabase("Main");
             y.EnableDetailedErrors();
             y.EnableSensitiveDataLogging();
             y.ConfigureWarnings(y => y.Ignore(InMemoryEventId.TransactionIgnoredWarning));
@@ -102,7 +111,7 @@ public class Program
         {
             var config = configBuilder.Build();
             var configSource = new CustomCleanConfigurationSource(opts =>
-                opts.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]));
+                opts.UseInMemoryDatabase("Main"));
             configBuilder.Add(configSource);
         });
 #pragma warning restore ASP0013 // Suggest switching from using Configure methods to WebApplicationBuilder.Configuration
@@ -123,37 +132,17 @@ public class Program
 
         builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
-        builder.Services.AddAkka("clean-system", (akkaBuilder, provider) =>
-        {
-            akkaBuilder.WithSqlPersistence(builder.Configuration["ConnectionStrings:DefaultConnection"],
-                ProviderName.SqlServer2022)
-            .StartActors((actors, registry, resolver) =>
-            {
-                var regStatus = registry.TryRegister<SampleTodoListActor>(actors.ActorOf<SampleTodoListActor>());
-                Log.Information("Registry Status: " + regStatus);
-            });
-
-        });
-       
-        //var assembly = typeof(ICleanActor).Assembly;
-        //var types = assembly.ExportedTypes
-        //   // filter types that are unrelated
-        //   .Where(x => x.IsClass && x.IsPublic && x.GetInterface(nameof(ICleanActor)) != null);
-        //foreach (var type in types)
-        //{
-        //    builder.Services.AddSingleton(provider =>
-        //    {
-        //        var actorSystem = provider.GetRequiredService<ActorSystem>();
-        //        var props = DependencyResolver.For(actorSystem).Props(type);
-        //        return actorSystem.ActorOf(props, type.Name);
-        //    });
-        //}
+        // builder.Services.AddAkka("clean-system", (akkaBuilder, provider) =>
+        // {
+        //     akkaBuilder.WithSqlPersistence(builder.Configuration["ConnectionStrings:DefaultConnection"],
+        //         ProviderName.SqlServer2022);
+        // });
 
 
         var app = builder.Build();
 
         app.UseResponseCompression();
-        app.UseEnyimMemcached();
+        //app.UseEnyimMemcached();
         app.UseResponseCaching()
             .UseFastEndpoints(y => y.Serializer.Options.ReferenceHandler = ReferenceHandler.IgnoreCycles);
         // Configure the HTTP request pipeline.
