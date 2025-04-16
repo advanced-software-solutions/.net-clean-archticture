@@ -15,6 +15,14 @@ public class CleanAppConfiguration
     public InMemoryCaching InMemoryCaching { get; set; }
     public Auth Auth { get; set; }
     public Datastore Datastore { get; set; }
+    public ResponseCache ResponseCache { get; set; }
+}
+
+public class ResponseCache
+{
+    public bool Enabled { get; set; }
+    public int Duration { get; set; }
+    public string[] VaryByHeaders { get; set; }
 }
 
 public class Datastore

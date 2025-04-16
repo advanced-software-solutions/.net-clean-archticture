@@ -34,6 +34,8 @@ public class ControllerGenerator : IIncrementalGenerator
         using CleanOperation;
         using CleanBase;
         using CleanOperation.Operations;
+        using Microsoft.Extensions.Options;
+        using CleanBase.Configurations;
 
         namespace CleanAPI.Controllers;
 
@@ -85,13 +87,18 @@ public class ControllerGenerator : IIncrementalGenerator
                 {
                     public IRepository<{{source.Name}}> _repository { get; set; }
                     public IMemoryCacheOperation _factory { get; set; }
+                    public IOptionsSnapshot<CleanAppConfiguration> configuration { get; set; }
                     public override void Configure()
                     {
                         Get("/api/{{source.Name}}/{id}");
         #if DEBUG
                         AllowAnonymous();
         #endif
-                        ResponseCache(30);
+                        var responseConfig = configuration.Value.ResponseCache;
+                        if (responseConfig != null && responseConfig.Enabled)
+                        {
+                            ResponseCache(responseConfig.Duration);
+                        }
                         SerializerContext<AppJsonSerializerContext>();
                     }
 

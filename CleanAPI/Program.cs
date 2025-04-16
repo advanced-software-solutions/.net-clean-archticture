@@ -1,7 +1,10 @@
+using Akka.Actor;
+using Akka.Hosting;
 using CleanAPI.Extensions;
 using CleanBase;
 using CleanBase.Configurations;
 using CleanBase.Validator;
+using CleanBusiness.Actors;
 using CleanOperation;
 using CleanOperation.DataAccess;
 using FastEndpoints;
@@ -100,11 +103,29 @@ public class Program
 
         builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
-        // builder.Services.AddAkka("clean-system", (akkaBuilder, provider) =>
-        // {
-        //     akkaBuilder.WithSqlPersistence(builder.Configuration["ConnectionStrings:DefaultConnection"],
-        //         ProviderName.SqlServer2022);
-        // });
+        builder.Services.AddAkka("clean-system", (akkaBuilder, provider) =>
+        {
+            akkaBuilder.WithActors((system, registry) =>
+            {
+                // Get all concrete types implementing ICleanActor
+                var actorTypes = typeof(ICleanActor).Assembly.GetTypes()
+                    .Where(t => typeof(ICleanActor).IsAssignableFrom(t) &&
+                               !t.IsInterface &&
+                               !t.IsAbstract && t.Name.EndsWith("Actor"));
+
+                foreach (var type in actorTypes)
+                {
+                    var actorKey = type.FullName!;
+                    var props = Props.Create(type);
+
+                    // Create the actor instance first
+                    var actorRef = system.ActorOf(props, actorKey);
+
+                    // Register the actor reference directly
+                    registry.TryRegister(type, actorRef);
+                }
+            });
+        });
 
 
         var app = builder.Build();
