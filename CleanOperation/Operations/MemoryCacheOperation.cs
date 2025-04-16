@@ -6,6 +6,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Serilog;
 
 namespace CleanOperation.Operations
 {
@@ -13,25 +14,28 @@ namespace CleanOperation.Operations
     {
         private readonly CleanAppConfiguration appConfiguration;
         private readonly IServiceProvider serviceProvider;
+        private readonly CachingProvider cachingProvider;
 
         public MemoryCacheOperation(IOptions<CleanAppConfiguration> configuration,
             IServiceProvider serviceProvider)
         {
             appConfiguration = configuration.Value;
             this.serviceProvider = serviceProvider;
+            cachingProvider = appConfiguration.InMemoryCaching.Provider.ParseEnum<CachingProvider>();
+            Log.Information("InMemory Cache Provider: {0}", cachingProvider);
         }
         public T? Get<T>(string key)
         {
             using (var scope = serviceProvider.CreateScope())
             {
-                switch (appConfiguration.InMemoryCaching.Provider.ParseEnum<CachingProvider>())
+                switch (cachingProvider)
                 {
                     case CachingProvider.Memcache:
                         var memcacheService = scope.ServiceProvider.GetService<IMemcachedClient>();
-                        return memcacheService.Get<T>(key);
+                        return memcacheService.Get<T?>(key);
                     case CachingProvider.InMemory:
                         var inMemory = scope.ServiceProvider.GetService<IMemoryCache>();
-                        return inMemory.Get<T>(key);
+                        return inMemory.Get<T?>(key);
                 }
                 return default(T?);
             }
