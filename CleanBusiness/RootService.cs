@@ -1,6 +1,4 @@
 ﻿using CleanBase;
-using CleanBase.CleanAbstractions.CleanBusiness;
-using CleanBase.CleanAbstractions.CleanOperation;
 using CleanOperation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;

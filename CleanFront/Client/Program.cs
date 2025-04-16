@@ -1,8 +1,7 @@
-using CleanFront;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
-namespace CleanFront;
+namespace CleanFront.Client;
 
 public class Program
 {

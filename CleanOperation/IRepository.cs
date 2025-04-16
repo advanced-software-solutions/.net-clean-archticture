@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Linq.Expressions;
+using CleanBase;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Query;
-using System.Linq.Expressions;
 
-namespace CleanBase.CleanAbstractions.CleanOperation;
+namespace CleanOperation;
 
 public interface IRepository<T> where T : class, IEntityRoot
 {

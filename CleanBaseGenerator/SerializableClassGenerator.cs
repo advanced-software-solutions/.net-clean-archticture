@@ -1,8 +1,9 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System.Text;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using System.Linq;
-using System.Text;
+
+namespace CleanBaseGenerator;
 
 [Generator]
 public class SerializableClassGenerator : IIncrementalGenerator
@@ -10,10 +11,10 @@ public class SerializableClassGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var entityRootClasses = context.SyntaxProvider
-                .CreateSyntaxProvider(
-                    predicate: static (s, _) => s is ClassDeclarationSyntax,
-                    transform: static (ctx, _) => GetClassSymbol(ctx))
-                .Where(static s => s is not null && IsInheritingFromEntityRoot(s!));
+            .CreateSyntaxProvider(
+                predicate: static (s, _) => s is ClassDeclarationSyntax,
+                transform: static (ctx, _) => GetClassSymbol(ctx))
+            .Where(static s => s is not null && IsInheritingFromEntityRoot(s!));
 
         // Generate source code for each found class
 
@@ -52,16 +53,16 @@ public class SerializableClassGenerator : IIncrementalGenerator
 
         string source = $$"""
 
-            using System.Text.Json.Serialization;
-            using CleanBase.Entities;
+                          using System.Text.Json.Serialization;
+                          using CleanBase.Entities;
 
-            namespace CleanBase.Generated;
+                          namespace CleanBase.Generated;
 
-            /*[JsonSerializable(typeof(List<{{className}}>))]
-            [JsonSerializable(typeof({{className}}))]
-            public partial class EntityRootContextList : JsonSerializerContext { }*/           
-            
-            """;
+                          /*[JsonSerializable(typeof(List<{{className}}>))]
+                          [JsonSerializable(typeof({{className}}))]
+                          public partial class EntityRootContextList : JsonSerializerContext { }*/           
+
+                          """;
 
         context.AddSource($"{className}.g.cs", SourceText.From(source, Encoding.UTF8));
     }

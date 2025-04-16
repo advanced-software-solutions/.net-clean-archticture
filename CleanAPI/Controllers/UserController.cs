@@ -1,11 +1,12 @@
-﻿using CleanBase.CleanAbstractions.CleanOperation;
-using CleanBase.Entities;
+﻿using CleanBase.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using CleanBase.Configurations;
+using CleanOperation;
 
 namespace CleanAPI.Controllers
 {
@@ -27,7 +28,9 @@ namespace CleanAPI.Controllers
         private string generateJwt(IConfiguration configuration, IRepository<UserAccount> repository, UserLoginRequest request)
         {
             var userData = repository.Get(y => y.Email.Equals(request.userName));
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Auth:Key"]));
+            CleanAppConfiguration appConfig = new();
+            configuration.GetSection("CleanAppConfiguration").Bind(appConfig);
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appConfig.Auth.Key));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             //If you've had the login module, you can also use the real user information here
@@ -38,8 +41,8 @@ namespace CleanAPI.Controllers
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
     };
 
-            var token = new JwtSecurityToken(configuration["Auth:Authority"],
-                configuration["Auth:Audience"],
+            var token = new JwtSecurityToken(appConfig.Auth.Authority,
+                appConfig.Auth.Audience,
                 claims,
                 expires: DateTime.Now.AddMinutes(120),
                 signingCredentials: credentials);

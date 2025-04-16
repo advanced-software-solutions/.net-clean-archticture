@@ -1,29 +1,21 @@
 using Akka.Actor;
-using Akka.Actor.Setup;
-using Akka.DependencyInjection;
 using Akka.Hosting;
-using Akka.Persistence.Hosting;
-using Akka.Persistence.Sql.Hosting;
+using CleanAPI.Extensions;
 using CleanBase;
-using CleanBase.CleanAbstractions.CleanOperation;
-using CleanBase.Entities;
+using CleanBase.Configurations;
 using CleanBase.Validator;
 using CleanBusiness.Actors;
-using CleanOperation.ConfigProvider;
+using CleanOperation;
 using CleanOperation.DataAccess;
 using FastEndpoints;
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using LinqToDB;
 using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.Batch;
 using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
-using RepoDb;
 using Scalar.AspNetCore;
 using Serilog;
 using System.IO.Compression;
@@ -38,30 +30,39 @@ public class Program
     public static void Main(string[] args)
     {
         Log.Logger = new LoggerConfiguration()
-.WriteTo.Console()
-.CreateLogger();
-
+        .WriteTo.Console()
+        .CreateLogger();
+        Log.Information("Application Starting");
         var builder = WebApplication.CreateBuilder(args);
+        CleanAppConfiguration appConfig = new();
+        builder.Configuration.GetSection("CleanAppConfiguration").Bind(appConfig);
+        builder.Services.AddOptions<CleanAppConfiguration>().BindConfiguration(nameof(CleanAppConfiguration));
+        if (appConfig is null)
+        {
+            throw new ArgumentNullException(
+                "Configurations are missing. Please check your appsettings.json configuration.");
+        }
         builder.Services.AddAuthentication()
         .AddJwtBearer(jwtOptions =>
         {
             jwtOptions.RequireHttpsMetadata = false;
-            jwtOptions.Authority = builder.Configuration["Auth:Authority"];
-            jwtOptions.Audience = builder.Configuration["Auth:Audience"];
+            jwtOptions.Authority = appConfig.Auth.Authority;
+            jwtOptions.Audience = appConfig.Auth.Audience;
             jwtOptions.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
                 ValidateAudience = true,
                 ValidateIssuerSigningKey = true,
                 ValidateLifetime = true,
-                ValidAudiences = builder.Configuration.GetSection("Auth:ValidAudiences").Get<string[]>(),
-                ValidIssuers = builder.Configuration.GetSection("Auth:ValidIssuers").Get<string[]>(),
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Auth:Key"]))
+                ValidAudiences = appConfig.Auth.ValidAudiences,
+                ValidIssuers = appConfig.Auth.ValidIssuers,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appConfig.Auth.Key))
             };
-        
+
             jwtOptions.MapInboundClaims = false;
         });
-        builder.Services.AddEnyimMemcached();
+
+        builder.AddInMemoryCache(appConfig);
         builder.Services.AddOpenApi();
         builder.Services.AddSerilog();
         builder.Services.AddFastEndpoints().AddResponseCaching();
@@ -83,29 +84,8 @@ public class Program
         });
         builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         // Add services to the container.
-        builder.Services.AddDbContext<AppDataContext>(y =>
-        {
-            var dbConnection = builder.Configuration["ConnectionStrings:DefaultConnection"];
-            y.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"],
-                o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
-            //y.UseInMemoryDatabase("Main");
-            y.EnableDetailedErrors();
-            y.EnableSensitiveDataLogging();
-            y.ConfigureWarnings(y => y.Ignore(InMemoryEventId.TransactionIgnoredWarning));
-            y.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
-        });
-        GlobalConfiguration
-    .Setup()
-    .UseSqlServer();
-#pragma warning disable ASP0013 // Suggest switching from using Configure methods to WebApplicationBuilder.Configuration
-        builder.Host.ConfigureAppConfiguration((hostingContext, configBuilder) =>
-        {
-            var config = configBuilder.Build();
-            var configSource = new CustomCleanConfigurationSource(opts =>
-                opts.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]));
-            configBuilder.Add(configSource);
-        });
-#pragma warning restore ASP0013 // Suggest switching from using Configure methods to WebApplicationBuilder.Configuration
+        builder.AddDatastoreConnection(appConfig);
+
         var defaultBatchHandler = new DefaultODataBatchHandler();
         defaultBatchHandler.MessageQuotas.MaxNestingDepth = 3;
         defaultBatchHandler.MessageQuotas.MaxOperationsPerChangeset = 10;
@@ -125,40 +105,38 @@ public class Program
 
         builder.Services.AddAkka("clean-system", (akkaBuilder, provider) =>
         {
-            akkaBuilder.WithSqlPersistence(builder.Configuration["ConnectionStrings:DefaultConnection"],
-                ProviderName.SqlServer2022)
-            .StartActors((actors, registry, resolver) =>
+            akkaBuilder.WithActors((system, registry) =>
             {
-                var regStatus = registry.TryRegister<SampleTodoListActor>(actors.ActorOf<SampleTodoListActor>());
-                Log.Information("Registry Status: " + regStatus);
-            });
+                // Get all concrete types implementing ICleanActor
+                var actorTypes = typeof(ICleanActor).Assembly.GetTypes()
+                    .Where(t => typeof(ICleanActor).IsAssignableFrom(t) &&
+                               !t.IsInterface &&
+                               !t.IsAbstract && t.Name.EndsWith("Actor"));
 
+                foreach (var type in actorTypes)
+                {
+                    var actorKey = type.FullName!;
+                    var props = Props.Create(type);
+
+                    // Create the actor instance first
+                    var actorRef = system.ActorOf(props, actorKey);
+
+                    // Register the actor reference directly
+                    registry.TryRegister(type, actorRef);
+                }
+            });
         });
-       
-        //var assembly = typeof(ICleanActor).Assembly;
-        //var types = assembly.ExportedTypes
-        //   // filter types that are unrelated
-        //   .Where(x => x.IsClass && x.IsPublic && x.GetInterface(nameof(ICleanActor)) != null);
-        //foreach (var type in types)
-        //{
-        //    builder.Services.AddSingleton(provider =>
-        //    {
-        //        var actorSystem = provider.GetRequiredService<ActorSystem>();
-        //        var props = DependencyResolver.For(actorSystem).Props(type);
-        //        return actorSystem.ActorOf(props, type.Name);
-        //    });
-        //}
 
 
         var app = builder.Build();
-
+        app.ConfigureAppUse(appConfig);
         app.UseResponseCompression();
-        app.UseEnyimMemcached();
         app.UseResponseCaching()
             .UseFastEndpoints(y => y.Serializer.Options.ReferenceHandler = ReferenceHandler.IgnoreCycles);
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
+            app.Services.UpdateDatabase();
             app.MapOpenApi();
             app.MapScalarApiReference();
             app.UseSerilogRequestLogging();

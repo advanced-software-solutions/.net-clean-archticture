@@ -33,3 +33,10 @@
 /CleanBaseGenerator/bin/Debug/netstandard2.0
 /CleanBaseGenerator/obj
 /.idea/.idea.CleanArchitecture/.idea
+/CleanAPI/bin/Release/net9.0
+/CleanBase/bin/Release/net9.0
+/CleanAPIGenerator/bin/Release/netstandard2.0
+/CleanBaseGenerator/bin/Release/netstandard2.0
+/CleanBusiness/bin/Release/net9.0
+/CleanGenerator/bin/Release/netstandard2.0
+/CleanOperation/bin/Release/net9.0
