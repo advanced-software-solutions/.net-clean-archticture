@@ -33,6 +33,7 @@ public class ControllerGenerator : IIncrementalGenerator
         using Enyim.Caching;
         using CleanOperation;
         using CleanBase;
+        using CleanOperation.Operations;
 
         namespace CleanAPI.Controllers;
 
@@ -83,7 +84,7 @@ public class ControllerGenerator : IIncrementalGenerator
                 public class {{source.Name}}GetById : FastEndpoints.EndpointWithoutRequest<{{source.Name}}>
                 {
                     public IRepository<{{source.Name}}> _repository { get; set; }
-                    //public IMemcachedClient _factory { get; set; }
+                    public IMemoryCacheOperation _factory { get; set; }
                     public override void Configure()
                     {
                         Get("/api/{{source.Name}}/{id}");
@@ -97,14 +98,14 @@ public class ControllerGenerator : IIncrementalGenerator
                     public override async Task HandleAsync(CancellationToken ct)
                     {
                         var req = Route<Guid>("id");
-                        /*var exists = await _factory.GetAsync<EntityResult<{{source.Name}}>>("{{source.Name}}:id:" + req);
-                        if (exists.HasValue)
+                        var exists = _factory.Get<{{source.Name}}>("{{source.Name}}:id:" + req);
+                        if (exists is not null)
                         {
-                            await SendAsync((await _factory.GetAsync<{{source.Name}}>("{{source.Name}}:id:" + req)).Value);
+                            await SendAsync((_factory.Get<{{source.Name}}>("{{source.Name}}:id:" + req)));
                             return;
-                        }*/
+                        }
                         var result = await _repository.GetAsync(req);
-                        //await _factory.SetAsync("{{source.Name}}:id:" + req, result, TimeSpan.FromSeconds(30));
+                        _factory.Set("{{source.Name}}:id:" + req, result);
                         await SendAsync(result);
                     }
                 }

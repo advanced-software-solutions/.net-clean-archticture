@@ -1,5 +1,5 @@
 ﻿namespace CleanOperation;
 
-public interface IOperation
+public interface ICleanOperation
 {
 }

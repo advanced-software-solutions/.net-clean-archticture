@@ -1,37 +1,24 @@
-using Akka.Actor;
-using Akka.Actor.Setup;
-using Akka.DependencyInjection;
-using Akka.Hosting;
-using Akka.Persistence.Hosting;
-using Akka.Persistence.Sql.Hosting;
+using CleanAPI.Extensions;
 using CleanBase;
-using CleanBase.Entities;
+using CleanBase.Configurations;
 using CleanBase.Validator;
-using CleanBusiness.Actors;
-using CleanOperation.ConfigProvider;
+using CleanOperation;
 using CleanOperation.DataAccess;
 using FastEndpoints;
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using LinqToDB;
 using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.Batch;
 using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
-using RepoDb;
 using Scalar.AspNetCore;
 using Serilog;
 using System.IO.Compression;
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
-using CleanAPI.Extensions;
-using CleanBase.Configurations;
-using CleanOperation;
 
 namespace CleanAPI;
 
@@ -40,12 +27,13 @@ public class Program
     public static void Main(string[] args)
     {
         Log.Logger = new LoggerConfiguration()
-.WriteTo.Console()
-.CreateLogger();
-
+        .WriteTo.Console()
+        .CreateLogger();
+        Log.Information("Application Starting");
         var builder = WebApplication.CreateBuilder(args);
         CleanAppConfiguration appConfig = new();
         builder.Configuration.GetSection("CleanAppConfiguration").Bind(appConfig);
+        builder.Services.AddOptions<CleanAppConfiguration>().BindConfiguration(nameof(CleanAppConfiguration));
         if (appConfig is null)
         {
             throw new ArgumentNullException(
@@ -67,10 +55,10 @@ public class Program
                 ValidIssuers = appConfig.Auth.ValidIssuers,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appConfig.Auth.Key))
             };
-        
+
             jwtOptions.MapInboundClaims = false;
         });
-        
+
         builder.AddInMemoryCache(appConfig);
         builder.Services.AddOpenApi();
         builder.Services.AddSerilog();
@@ -120,9 +108,8 @@ public class Program
 
 
         var app = builder.Build();
-
+        app.ConfigureAppUse(appConfig);
         app.UseResponseCompression();
-        //app.UseEnyimMemcached();
         app.UseResponseCaching()
             .UseFastEndpoints(y => y.Serializer.Options.ReferenceHandler = ReferenceHandler.IgnoreCycles);
         // Configure the HTTP request pipeline.

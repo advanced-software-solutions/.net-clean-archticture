@@ -7,3 +7,9 @@ public enum DatastoreType
     PostgreSql,
     SQLite
 }
+
+public enum CachingProvider
+{
+    Memcache,
+    InMemory
+}
