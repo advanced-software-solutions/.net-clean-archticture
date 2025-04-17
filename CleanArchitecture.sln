@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleanAPIGenerator", "CleanA
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleanBaseGenerator", "CleanBaseGenerator\CleanBaseGenerator.csproj", "{2C74C886-ED31-4E34-AEC1-56A20381A668}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CeanArchitecture.Tests", "CeanArchitecture.Tests\CeanArchitecture.Tests.csproj", "{49D17D12-1A8C-4596-88B9-FFDB3ACDACF7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -67,6 +69,10 @@ Global
 		{2C74C886-ED31-4E34-AEC1-56A20381A668}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2C74C886-ED31-4E34-AEC1-56A20381A668}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2C74C886-ED31-4E34-AEC1-56A20381A668}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49D17D12-1A8C-4596-88B9-FFDB3ACDACF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49D17D12-1A8C-4596-88B9-FFDB3ACDACF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49D17D12-1A8C-4596-88B9-FFDB3ACDACF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49D17D12-1A8C-4596-88B9-FFDB3ACDACF7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

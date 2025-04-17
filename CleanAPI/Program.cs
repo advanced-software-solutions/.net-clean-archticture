@@ -1,6 +1,7 @@
 using Akka.Actor;
 using Akka.Hosting;
 using CleanAPI.Extensions;
+using CleanAPI.Middlewares;
 using CleanBase;
 using CleanBase.Configurations;
 using CleanBase.Validator;
@@ -30,7 +31,9 @@ public class Program
     public static void Main(string[] args)
     {
         Log.Logger = new LoggerConfiguration()
-        .WriteTo.Console()
+        .WriteTo.Console(outputTemplate:
+        "[{Timestamp:HH:mm:ss} {Level:u3} {CorrelationId}] {Message}{NewLine}{Exception}")
+        .Enrich.FromLogContext()
         .CreateLogger();
         Log.Information("Application Starting");
         var builder = WebApplication.CreateBuilder(args);
@@ -129,6 +132,7 @@ public class Program
 
 
         var app = builder.Build();
+        app.UseMiddleware<CorrelationIdMiddleware>();
         app.ConfigureAppUse(appConfig);
         app.UseResponseCompression();
         app.UseResponseCaching()
