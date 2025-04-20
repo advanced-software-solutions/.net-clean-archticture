@@ -36,6 +36,7 @@ public class ControllerGenerator : IIncrementalGenerator
         using CleanOperation.Operations;
         using Microsoft.Extensions.Options;
         using CleanBase.Configurations;
+        using Serilog;
 
         namespace CleanAPI.Controllers;
 
@@ -60,6 +61,7 @@ public class ControllerGenerator : IIncrementalGenerator
 
                     public override async Task HandleAsync({{source.Name}} req, CancellationToken ct)
                     {
+                        Log.Information("Data for insert: {@0}", req);
                         var result = await _repository.InsertAsync(req);
                         await SendAsync(result);
                     }
