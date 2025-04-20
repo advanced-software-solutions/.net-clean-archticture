@@ -41,3 +41,4 @@
 /CleanGenerator/bin/Release/netstandard2.0
 /CleanOperation/bin/Release/net9.0
 /CeanArchitecture.Tests/obj
+/CeanArchitecture.Tests/bin/Debug/net9.0
