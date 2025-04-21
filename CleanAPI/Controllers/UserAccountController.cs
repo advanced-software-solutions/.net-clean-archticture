@@ -8,6 +8,7 @@ using System.Text;
 using CleanBase.Configurations;
 using CleanOperation;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 namespace CleanAPI.Controllers
 {
@@ -21,8 +22,12 @@ namespace CleanAPI.Controllers
             [FromServices] IConfiguration configuration, [FromServices] IRepository<UserAccount> repository)
         {
             var user = repository.Query().Any(r => r.Email.Equals(request.email)
-            && EF.Property<string>(r, "Password") == request.password);
-            if (!user) return BadRequest();
+            && EF.Property<string>(r, nameof(UserAccount.Password)) == request.password);
+            if (!user)
+            {
+                Log.Information("User not found: {@0}", request);
+                return BadRequest();
+            }
             return Ok(generateJwt(configuration, repository, request));
         }
 
@@ -50,17 +55,23 @@ namespace CleanAPI.Controllers
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-        [HttpPost("{action}")]
+        [HttpPost("[action]")]
         [AllowAnonymous]
-        public async Task Register([FromBody] UserRegisterRequest registerRequest, [FromServices] IRepository<UserAccount> repository)
+        public async Task<ActionResult<UserAccount>> Register([FromBody] UserRegisterRequest registerRequest,
+            [FromServices] IRepository<UserAccount> repository)
         {
-            await repository.InsertAsync(
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var user =await repository.InsertAsync(
                 new UserAccount
                 {
                     Email = registerRequest.Email,
                     Password = registerRequest.Password,
                     UserRoleId = registerRequest.UserRoleId
                 });
+            return Ok(user);
         }
     }
 
@@ -71,10 +82,5 @@ namespace CleanAPI.Controllers
 
     }
 
-    public class UserRegisterRequest
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
-        public Guid UserRoleId { get; set; }
-    }
+    public record UserRegisterRequest(string Email, string Password, Guid UserRoleId);
 }

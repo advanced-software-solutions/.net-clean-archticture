@@ -1,23 +1,23 @@
-﻿using CleanBase.Entities;
+﻿using CeanArchitecture.Tests.Controllers;
 using Refit;
 
 namespace CeanArchitecture.Tests
 {
     public class UsersTests
     {
-        public IUserController userController;
-        public IUserController _userController
+        private IUserAccountController userController;
+        public IUserAccountController _userController
         {
             get
             {
-                userController ??= RestService.For<IUserController>("https://localhost:7219/api");
+                userController ??= RestService.For<IUserAccountController>("https://localhost:7219/api");
                 return userController;
             }
         }
         [Fact]
         public async Task CheckLogin()
         {
-            var token = await _userController.Login(new LoginRequest("amr@gmail.com", "123"));
+            var token = await _userController.Login(new LoginRequest("sample", "123"));
             var userData = await _userController.ODataTop1("Bearer " + token);
             Assert.True(userData != null && userData.Count > 0);
         }
@@ -30,10 +30,9 @@ namespace CeanArchitecture.Tests
         [Fact]
         public async Task CreateUser()
         {
-            var user = new UserAccount { Email = "sample", UserRoleId = Guid.Parse("e26b6816-3ec1-49b9-8294-05e8ac6d4689"),
-            Password = "test"};
+            var user = new UserRegisterRequest("sample", "123", Guid.Parse("e26b6816-3ec1-49b9-8294-05e8ac6d4689"));
             var result = await _userController.Create(user);
-            if (result != null) { }
+            Assert.NotNull(result);
         }
     }
 }

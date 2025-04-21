@@ -73,6 +73,21 @@ public static class AppRegistrationExtensions
 #endif
             y.ConfigureWarnings(y => y.Ignore(InMemoryEventId.TransactionIgnoredWarning));
             y.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+#if DEBUG
+            y.UseSeeding((dbContext, _) =>
+            {
+                if (dbContext.Set<UserRole>().Count() == 0)
+                {
+                    dbContext.Set<UserRole>().Add(new UserRole { Id = Constants.AdminRoleId, Name = "admin" });
+                }
+                if (dbContext.Set<UserAccount>().Count() == 0)
+                {
+                    dbContext.Set<UserAccount>().Add(
+                        new UserAccount { Email = "admin", Password = "123", UserRoleId = Constants.AdminRoleId });
+                }
+                dbContext.SaveChanges();
+            });
+#endif
         });
     }
 
