@@ -1,4 +1,5 @@
 ﻿using CeanArchitecture.Tests.Controllers;
+using CleanBase;
 using Refit;
 
 namespace CeanArchitecture.Tests
@@ -17,7 +18,7 @@ namespace CeanArchitecture.Tests
         [Fact]
         public async Task CheckLogin()
         {
-            var token = await _userController.Login(new LoginRequest("sample", "123"));
+            var token = await _userController.Login(new LoginRequest("admin", "123"));
             var userData = await _userController.ODataTop1("Bearer " + token);
             Assert.True(userData != null && userData.Count > 0);
         }
@@ -30,7 +31,7 @@ namespace CeanArchitecture.Tests
         [Fact]
         public async Task CreateUser()
         {
-            var user = new UserRegisterRequest("sample", "123", Guid.Parse("e26b6816-3ec1-49b9-8294-05e8ac6d4689"));
+            var user = new UserRegisterRequest("admin", "123", Constants.AdminRoleId);
             var result = await _userController.Create(user);
             Assert.NotNull(result);
         }

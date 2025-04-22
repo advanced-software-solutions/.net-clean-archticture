@@ -57,6 +57,8 @@ public static class AppRegistrationExtensions
                         o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
                     break;
                 case DatastoreType.PostgreSql:
+                    AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+                    y.UseNpgsql(appConfiguration.Datastore.ConnectionString);
                     break;
                 case DatastoreType.SQLite:
                     var folder = Environment.SpecialFolder.LocalApplicationData;
