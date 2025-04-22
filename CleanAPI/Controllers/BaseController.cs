@@ -2,6 +2,8 @@
 using CleanBusiness;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
+using Serilog;
+using System.Diagnostics;
 
 namespace CleanAPI.Controllers;
 
@@ -23,12 +25,14 @@ public class BaseController<T> : ControllerBase where T : class, IEntityRoot
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] T entity)
     {
+        Log.Information("Data for insert: {@0}", entity);
         var result = await _service.InsertAsync(entity);
         return Ok(result);
     }
     [HttpPost("[action]")]
     public async Task<IActionResult> InsertList([FromBody] List<T> entity)
     {
+        Log.Information("Data for insert: {@0}", entity);
         await _service.InsertAsync(entity);
         return Ok(entity);
     }

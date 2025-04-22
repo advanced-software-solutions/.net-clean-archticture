@@ -25,6 +25,7 @@ public class AppDataContext : DbContext
         modelBuilder.Entity<TodoList>().ToTable("TodoLists", "Core");
         modelBuilder.Entity<UserRole>().ToTable("UserRoles", "Core");
         modelBuilder.Entity<UserAccount>().ToTable("UserAccounts", "Core");
+        modelBuilder.Entity<UserAccount>().Property<string>("Password");
         EntityPropertyMapper(modelBuilder);
     }
     private void EntityPropertyMapper(ModelBuilder modelBuilder)
