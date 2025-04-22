@@ -42,3 +42,5 @@
 /CleanOperation/bin/Release/net9.0
 /CeanArchitecture.Tests/obj
 /CeanArchitecture.Tests/bin/Debug/net9.0
+/CleanConsole.PerformanceTests/bin/Debug/net9.0
+/CleanConsole.PerformanceTests/obj
