@@ -131,7 +131,20 @@ public class Program
         });
 
 
-        var app = builder.Build();
+        var assembly = typeof(EntityRoot).Assembly;
+        var types = assembly.ExportedTypes
+           // filter types that are unrelated
+           .Where(x => x.IsClass && x.IsPublic && x.BaseType == typeof(CleanBase.EntityRoot));
+        builder.Services
+          .AddGraphQLServer()
+          .AddQueryType();
+        //foreach (var type in types)
+        //{
+          
+        //    .AddQueryType(type);
+        //}
+
+            var app = builder.Build();
         app.UseMiddleware<CorrelationIdMiddleware>();
         app.ConfigureAppUse(appConfig);
         app.UseResponseCompression();
@@ -152,7 +165,7 @@ public class Program
 
 
         app.MapControllers();
-
+        app.MapGraphQL();
         app.Run();
     }
     private static IEdmModel GetEdmModel()
