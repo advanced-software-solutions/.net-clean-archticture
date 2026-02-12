@@ -26,7 +26,7 @@ public class ControllerGenerator : IIncrementalGenerator
         {
 
             var sourceText = $$"""
-
+        using FastEndpoints;
         using Akka.Actor;
         using CleanBase.Entities;
         using CleanBase.Dtos;
@@ -63,7 +63,7 @@ public class ControllerGenerator : IIncrementalGenerator
                     {
                         Log.Information("Data for insert: {@0}", req);
                         var result = await _repository.InsertAsync(req);
-                        await SendAsync(result);
+                        await Send.OkAsync(result);
                     }
                 }
                 public class {{source.Name}}ListCreate : FastEndpoints.Endpoint<List<{{source.Name}}>, List<{{source.Name}}>>
@@ -81,7 +81,7 @@ public class ControllerGenerator : IIncrementalGenerator
                     public override async Task HandleAsync(List<{{source.Name}}> req, CancellationToken ct)
                     {
                         await _repository.InsertAsync(req);
-                        await SendAsync(req);
+                        await Send.OkAsync(req);
                     }
                 }
 
@@ -110,12 +110,12 @@ public class ControllerGenerator : IIncrementalGenerator
                         var exists = _factory.Get<{{source.Name}}>("{{source.Name}}:id:" + req);
                         if (exists is not null)
                         {
-                            await SendAsync((_factory.Get<{{source.Name}}>("{{source.Name}}:id:" + req)));
+                            await Send.OkAsync((_factory.Get<{{source.Name}}>("{{source.Name}}:id:" + req)));
                             return;
                         }
                         var result = await _repository.GetAsync(req);
                         _factory.Set("{{source.Name}}:id:" + req, result);
-                        await SendAsync(result);
+                        await Send.OkAsync(result);
                     }
                 }
 
@@ -135,7 +135,7 @@ public class ControllerGenerator : IIncrementalGenerator
                     {
                         var req = Route<Guid>("id");
                         _repository.Delete(req);
-                        await SendOkAsync(ct);
+                        await Send.OkAsync(ct);
                     }
                 }
 
@@ -155,7 +155,7 @@ public class ControllerGenerator : IIncrementalGenerator
                     {
 
                         var result = _repository.Update(req);
-                        await SendAsync(result.Entity,cancellation: ct);
+                        await Send.OkAsync(result.Entity,cancellation: ct);
                     }
                 }
 
