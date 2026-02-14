@@ -9,7 +9,6 @@ This project was created by [Advanced Software Solution](https://advancedsoftwar
 |Caching|None|Redis, InMemory|
 |Search Support| None| Lucen, Elastic|
 |Roslyn Analyzer|None|Visual Studio Extension|
-|Frontend|Blazor|Blazor, React, Angular, Vue.JS|
 |Docker|To be supported later on | Ready|
 |Ticket and Support|Only Github Issues| Email, Phone Support|
 
@@ -49,14 +48,8 @@ The Solution contains the following projects:
 	  1. Here we implement our services that contains the logic and the flow we need to complete a business need. 
 4. CleanAPI
 		1. This is where we connect all the other projects to produce a RESTFul service that communicate with all the layers and do the operations needed
-5. CleanFront
-	1. The Blazor Project that connects to the backend to allow user to interact with the system. This is using Blazor WebAssembly Hosting for a much smoother experience. You can use any Frontend framework such as Angular or React. 
 
-> Important Note! We suggest to use Blazor if you have a limited number
-> of users or using it internally in a private network as it uses a lot
-> of bandwidth
-
-6. DatabaseApp
+5. DatabaseApp
 	1. A project that contains all the schema definations for the basic database. You may use this projec to control your database.
 
 ## Development Guide
