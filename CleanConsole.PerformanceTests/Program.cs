@@ -13,7 +13,7 @@ internal class Program
         var tokenRequest = await httpClient.PostAsJsonAsync("UserAccount/Login", new { email = "admin", password = "123" });
         var token = await tokenRequest.Content.ReadAsStringAsync();
         httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
-        var scenarioSqlServer = Scenario.Create("sqlserver_scenario_insert1000", async context =>
+        var scenarioSqlServer1k = Scenario.Create("sqlserver_scenario_insert1000", async context =>
         {
             Faker<TodoList> faker = new Faker<TodoList>();
             faker.Rules((f, item) =>
@@ -49,7 +49,44 @@ internal class Program
             return Response.Ok();
         })
             .WithoutWarmUp()
-            .WithLoadSimulations(Simulation.IterationsForInject(1,TimeSpan.FromSeconds(1),10));
+            .WithLoadSimulations(Simulation.IterationsForInject(1,TimeSpan.FromSeconds(5),10));
+        var scenarioSqlServer = Scenario.Create("sqlserver_scenario_insert10,000", async context =>
+        {
+            Faker<TodoList> faker = new Faker<TodoList>();
+            faker.Rules((f, item) =>
+            {
+                item.DueDate = f.Date.Between(DateTime.Now.AddYears(-20), DateTime.Now);
+                item.Title = f.Random.Words(3);
+                item.TodoItems = new List<TodoItem>()
+                {
+                    new TodoItem()
+                    {
+                        Title = f.Random.Words(3)
+                    },
+                    new TodoItem()
+                    {
+                        Title = f.Random.Words(3)
+                    },
+                    new TodoItem()
+                    {
+                        Title = f.Random.Words(3)
+                    },
+                    new TodoItem()
+                    {
+                        Title = f.Random.Words(3)
+                    },
+                    new TodoItem()
+                    {
+                        Title = f.Random.Words(3)
+                    }
+                };
+            });
+            var response = await httpClient.PostAsJsonAsync("TodoList/CreateList", faker.Generate(10000));
+            var z = response.Content.ReadAsStringAsync();
+            return Response.Ok();
+        })
+            .WithoutWarmUp()
+            .WithLoadSimulations(Simulation.IterationsForInject(1,TimeSpan.FromSeconds(5),1));
         
         var scenarioSqlServerSingle = Scenario.Create("sqlserver_scenario_insert1", async context =>
         {
@@ -166,7 +203,7 @@ internal class Program
             .WithLoadSimulations(Simulation.IterationsForInject(1,TimeSpan.FromSeconds(1),10));
 
         NBomberRunner
-            .RegisterScenarios(scenarioSqlServerSingle)
+            .RegisterScenarios([scenarioSqlServer])
             .Run();
     }
 }

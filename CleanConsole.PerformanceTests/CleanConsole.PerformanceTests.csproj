@@ -8,8 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Bogus" Version="35.6.3" />
-    <PackageReference Include="NBomber" Version="6.0.2" />
+    <PackageReference Include="Bogus" Version="35.6.5" />
+    <PackageReference Include="NBomber" Version="6.2.0" />
   </ItemGroup>
 
   <ItemGroup>
