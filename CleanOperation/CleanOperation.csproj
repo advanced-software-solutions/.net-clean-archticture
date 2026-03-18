@@ -7,25 +7,25 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka" Version="1.5.60" />
-    <PackageReference Include="Akka.DependencyInjection" Version="1.5.60" />
-    <PackageReference Include="Akka.Hosting" Version="1.5.60" />
+    <PackageReference Include="Akka" Version="1.5.62" />
+    <PackageReference Include="Akka.DependencyInjection" Version="1.5.62" />
+    <PackageReference Include="Akka.Hosting" Version="1.5.62" />
     <PackageReference Include="Akka.Logger.Serilog" Version="1.5.60" />
-    <PackageReference Include="Akka.Persistence" Version="1.5.60" />
-    <PackageReference Include="Akka.Persistence.Sql" Version="1.5.59" />
-    <PackageReference Include="Akka.Persistence.Sql.Hosting" Version="1.5.59" />
+    <PackageReference Include="Akka.Persistence" Version="1.5.62" />
+    <PackageReference Include="Akka.Persistence.Sql" Version="1.5.60.1" />
+    <PackageReference Include="Akka.Persistence.Sql.Hosting" Version="1.5.60.1" />
     <PackageReference Include="Akka.Persistence.SqlServer" Version="1.5.37" />
     <PackageReference Include="Ardalis.GuardClauses" Version="5.0.0" />
-    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="Dapper" Version="2.1.72" />
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
     <PackageReference Include="Dapper.Rainbow" Version="2.1.66" />
-    <PackageReference Include="EnyimMemcachedCore" Version="3.4.5" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.3" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.3" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="10.3.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.3" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageReference Include="EnyimMemcachedCore" Version="3.4.6" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="10.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.5" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.Design" Version="1.1.0" />
     <PackageReference Include="RepoDb.SqlServer" Version="1.13.1" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />

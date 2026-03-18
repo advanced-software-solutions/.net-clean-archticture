@@ -8,17 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FastEndpoints" Version="7.2.0" />
+    <PackageReference Include="FastEndpoints" Version="8.0.1" />
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
-    <PackageReference Include="MicroElements.Swashbuckle.FluentValidation" Version="7.0.3" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.3" />
+    <PackageReference Include="MicroElements.Swashbuckle.FluentValidation" Version="7.1.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.4.1" />
     <PackageReference Include="Microsoft.AspNetCore.OData.NewtonsoftJson" Version="8.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="Scalar.AspNetCore" Version="2.12.40" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.13.11" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
   </ItemGroup>
 
